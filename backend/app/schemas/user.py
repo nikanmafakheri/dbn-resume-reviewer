@@ -1,5 +1,7 @@
 """User schemas."""
 
+from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
 from app.core.constants import UserRole
 
@@ -11,7 +13,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: str
+    id: UUID
     email: str
     full_name: str | None
     role: UserRole

@@ -21,6 +21,9 @@ class AnalysisService:
 
     async def run_analysis(self, analysis_id: str, resume_text: str):
         """Called from Celery worker."""
+
+    async def run_analysis(self, analysis_id: str, resume_text: str):
+        """Called from Celery worker."""
         analysis = await self.analysis_repo.get(analysis_id)
         if not analysis:
             return

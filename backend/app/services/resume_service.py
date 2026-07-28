@@ -19,7 +19,7 @@ class ResumeService:
         file_path.write_bytes(content)
 
         resume = Resume(
-            user_id=str(user_id),
+            user_id=user_id,
             filename=filename,
             original_filename=filename,
             file_path=str(file_path),

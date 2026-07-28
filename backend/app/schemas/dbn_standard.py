@@ -1,5 +1,7 @@
 """DBN Standard schemas."""
 
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -12,7 +14,7 @@ class CriterionCreate(BaseModel):
 
 
 class CriterionResponse(BaseModel):
-    id: str
+    id: UUID
     name: str
     description: str | None
     weight: float
@@ -29,7 +31,7 @@ class StandardCreate(BaseModel):
 
 
 class StandardResponse(BaseModel):
-    id: str
+    id: UUID
     name: str
     description: str | None
     version: str

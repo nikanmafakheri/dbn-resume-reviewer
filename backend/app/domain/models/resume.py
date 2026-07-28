@@ -1,15 +1,17 @@
 """Resume model."""
 
+from uuid import UUID
+
 from sqlalchemy import String, Text, BigInteger, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.domain.models.base import Base, TimestampMixin, UUIDMixin
+from app.domain.models.base import Base, TimestampMixin, UUIDMixin, GUID
 from app.core.constants import ResumeStatus
 
 
 class Resume(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "resumes"
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"))
     filename: Mapped[str] = mapped_column(String(255))
     original_filename: Mapped[str] = mapped_column(String(255))
     file_path: Mapped[str] = mapped_column(String(512))

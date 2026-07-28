@@ -1,17 +1,19 @@
 """Analysis model — includes flat score columns for MVP."""
 
+from uuid import UUID
+
 from sqlalchemy import String, Text, Float, Integer, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.domain.models.base import Base, TimestampMixin, UUIDMixin
+from app.domain.models.base import Base, TimestampMixin, UUIDMixin, GUID
 from app.core.constants import AnalysisStatus
 
 
 class Analysis(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "analyses"
 
-    resume_id: Mapped[str] = mapped_column(ForeignKey("resumes.id"))
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
-    dbn_standard_id: Mapped[str | None] = mapped_column(ForeignKey("dbn_standards.id"), nullable=True)
+    resume_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("resumes.id"))
+    user_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"))
+    dbn_standard_id: Mapped[UUID | None] = mapped_column(GUID(), ForeignKey("dbn_standards.id"), nullable=True)
     status: Mapped[AnalysisStatus]
     overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     ats_score: Mapped[float | None] = mapped_column(Float, nullable=True)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import PostgresDsn, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # ── App ──────────────────────────────────────────
     APP_NAME: str = "DBN Resume Reviewer"
+    APP_URL: str = "http://localhost:8000"
     DEBUG: bool = False
     API_V1_PREFIX: str = "/api/v1"
 
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
 
     # ── Database ─────────────────────────────────────
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: str = "sqlite+aiosqlite:///./dbn_resume.db"
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 10
     DB_POOL_PRE_PING: bool = True

@@ -1,5 +1,7 @@
 """Analysis schemas."""
 
+from uuid import UUID
+
 from pydantic import BaseModel
 from app.core.constants import AnalysisStatus
 
@@ -14,8 +16,8 @@ class ScoreResult(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
-    id: str
-    resume_id: str
+    id: UUID
+    resume_id: UUID
     status: AnalysisStatus
     overall_score: float | None
     ats_score: float | None

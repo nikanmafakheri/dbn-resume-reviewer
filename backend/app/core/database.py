@@ -81,10 +81,18 @@ def get_database() -> "Database":
 
 
 async def get_db() -> AsyncSession:
-    """FastAPI dependency: yield an async DB session."""
+    """FastAPI dependency: yield an async DB session.
+
+    Commits on success, rolls back on exception.
+    """
     db = get_database()
     async with db.session_factory() as session:
-        yield session
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
 
 
 async def init_db() -> None:
