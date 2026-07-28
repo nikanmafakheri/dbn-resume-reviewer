@@ -36,7 +36,6 @@ class Database:
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=10,
-            pool_pre_ping=True,
             pool_recycle=300,
         )
 
@@ -84,7 +83,7 @@ def get_database() -> "Database":
 async def get_db() -> AsyncSession:
     """FastAPI dependency: yield an async DB session."""
     db = get_database()
-    async with _database.session_factory() as session:
+    async with db.session_factory() as session:
         yield session
 
 

@@ -6,6 +6,7 @@ from fastapi import FastAPI  # type: ignore[import-not-found]
 
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.database import init_database, init_db, close_db
 from app.core.exceptions import AppException, app_exception_handler
 from app.middleware.cors import configure_cors
 from app.middleware.request_logging import RequestLoggingMiddleware
@@ -14,7 +15,10 @@ from app.middleware.request_logging import RequestLoggingMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging(debug=settings.DEBUG)
+    init_database()
+    await init_db()
     yield
+    await close_db()
 
 
 def create_app() -> FastAPI:

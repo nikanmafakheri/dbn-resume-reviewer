@@ -1,6 +1,6 @@
 """Resume model."""
 
-from sqlalchemy import String, Text, BigInteger, ForeignKey
+from sqlalchemy import String, Text, BigInteger, ForeignKey, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.domain.models.base import Base, TimestampMixin, UUIDMixin
 from app.core.constants import ResumeStatus
@@ -17,7 +17,7 @@ class Resume(UUIDMixin, TimestampMixin, Base):
     mime_type: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[ResumeStatus]
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    metadata_: Mapped[dict | None] = mapped_column("metadata", Text().with_variant(dict, "postgresql"), nullable=True)
+    metadata_: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
 
     user = relationship("User", back_populates="resumes")
     analyses = relationship("Analysis", back_populates="resume", lazy="selectin")

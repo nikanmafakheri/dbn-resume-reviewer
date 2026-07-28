@@ -3,9 +3,9 @@
 from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
+from app.core.database import get_db
 from app.repositories.user_repo import UserRepository
 from app.repositories.resume_repo import ResumeRepository
 from app.repositories.analysis_repo import AnalysisRepository
@@ -20,14 +20,6 @@ from app.ai.scorers.resume_scorer import ResumeScorer
 from app.core.config import settings
 
 security = HTTPBearer()
-
-
-# ── Placeholder session — replace with real async engine ──
-async def get_db() -> AsyncSession:
-    """Yield a database session."""
-    raise NotImplementedError("Database engine not yet configured — see migrations/")
-    # async with async_session() as session:
-    #     yield session
 
 
 # ── Repositories ──
@@ -61,6 +53,23 @@ def get_llm_provider():
     else:
         from app.ai.providers.openrouter import OpenRouterProvider
         return OpenRouterProvider()
+
+
+def create_scorer() -> ResumeScorer:
+    """Standalone factory for ResumeScorer (usable outside FastAPI DI, e.g. Celery)."""
+    if settings.LLM_PROVIDER == "gemini":
+        from app.ai.providers.gemini import GeminiProvider
+        provider = GeminiProvider()
+    elif settings.LLM_PROVIDER == "openai":
+        from app.ai.providers.openai import OpenAIProvider
+        provider = OpenAIProvider()
+    elif settings.LLM_PROVIDER == "claude":
+        from app.ai.providers.claude import ClaudeProvider
+        provider = ClaudeProvider()
+    else:
+        from app.ai.providers.openrouter import OpenRouterProvider
+        provider = OpenRouterProvider()
+    return ResumeScorer(provider)
 
 
 def get_scorer(provider=Depends(get_llm_provider)) -> ResumeScorer:

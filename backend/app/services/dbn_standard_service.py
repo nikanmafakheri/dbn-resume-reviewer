@@ -8,6 +8,6 @@ class DBNStandardService:
     def __init__(self, standard_repo: DBNStandardRepository):
         self.standard_repo = standard_repo
 
-    async def create_standard(self, name: str, version: str, description: str | None = None) -> DBNStandard:
-        standard = DBNStandard(name=name, version=version, description=description, created_by="system")
+    async def create_standard(self, name: str, version: str, description: str | None = None, created_by: str = "system") -> DBNStandard:
+        standard = DBNStandard(name=name, version=version, description=description, created_by=created_by)
         return await self.standard_repo.save(standard)
