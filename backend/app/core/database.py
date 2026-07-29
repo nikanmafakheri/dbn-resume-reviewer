@@ -13,9 +13,17 @@ from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 from app.domain.models.base import Base
 
+# Import all models so they register with Base.metadata
+import app.domain.models.user  # noqa: F401
+import app.domain.models.resume  # noqa: F401
+import app.domain.models.analysis  # noqa: F401
+import app.domain.models.dbn_standard  # noqa: F401
+
 
 class Database:
     """Manages the async SQLAlchemy engine and session factory."""
+
+    ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000"
 
     def __init__(self, url: str):
         self.engine = self._create_engine(url)
@@ -51,9 +59,86 @@ class Database:
         return self.session_factory
 
     async def init_db(self) -> None:
-        """Create all tables defined by SQLAlchemy models."""
+        """Create all tables defined by SQLAlchemy models, then seed defaults."""
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
+        # Seed anonymous user and default DBN Standard
+        from uuid import UUID
+        from sqlalchemy import select, text
+        from app.domain.models.user import User
+        from app.domain.models.dbn_standard import DBNStandard, DBNStandardCriterion
+        from app.core.constants import UserRole
+        from app.core.security import hash_password
+
+        async with self.session_factory() as session:
+            # Check if anonymous user already exists
+            result = await session.execute(
+                select(User).where(User.id == UUID(self.ANONYMOUS_USER_ID))
+            )
+            if not result.scalar_one_or_none():
+                anonymous = User(
+                    id=UUID(self.ANONYMOUS_USER_ID),
+                    email="anonymous@dbnresume.com",
+                    password_hash=hash_password("anonymous"),
+                    full_name="Anonymous User",
+                    role=UserRole.SYSTEM,
+                    is_active=True,
+                )
+                session.add(anonymous)
+
+            # Check if default standard already exists
+            result = await session.execute(
+                select(DBNStandard).where(DBNStandard.name == "DBN Resume Standard v1")
+            )
+            if not result.scalar_one_or_none():
+                standard = DBNStandard(
+                    name="DBN Resume Standard v1",
+                    description="Default scoring rubric for resume analysis",
+                    version="1.0",
+                    is_active=True,
+                    created_by=UUID(self.ANONYMOUS_USER_ID),
+                )
+                session.add(standard)
+                await session.flush()
+
+                criteria = [
+                    DBNStandardCriterion(
+                        dbn_standard_id=standard.id,
+                        name="Overall Score",
+                        description="Composite evaluation of the entire resume",
+                        weight=25.0,
+                        max_score=100.0,
+                        sort_order=1,
+                    ),
+                    DBNStandardCriterion(
+                        dbn_standard_id=standard.id,
+                        name="ATS Score",
+                        description="Compatibility with Applicant Tracking Systems",
+                        weight=25.0,
+                        max_score=100.0,
+                        sort_order=2,
+                    ),
+                    DBNStandardCriterion(
+                        dbn_standard_id=standard.id,
+                        name="Grammar Score",
+                        description="Spelling, grammar, punctuation, and writing style",
+                        weight=25.0,
+                        max_score=100.0,
+                        sort_order=3,
+                    ),
+                    DBNStandardCriterion(
+                        dbn_standard_id=standard.id,
+                        name="Recruiter Score",
+                        description="Appeal to human recruiters — impact, clarity, achievements",
+                        weight=25.0,
+                        max_score=100.0,
+                        sort_order=4,
+                    ),
+                ]
+                session.add_all(criteria)
+
+            await session.commit()
 
     async def close(self) -> None:
         """Dispose of the engine and all connections."""

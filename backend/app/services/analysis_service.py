@@ -1,7 +1,10 @@
 """Analysis service — orchestrates the analysis workflow."""
 
+from uuid import UUID
+
 from app.repositories.analysis_repo import AnalysisRepository
 from app.domain.models.analysis import Analysis
+from app.core.database import Database
 from app.core.constants import AnalysisStatus
 from app.ai.scorers.resume_scorer import ResumeScorer
 
@@ -11,16 +14,13 @@ class AnalysisService:
         self.analysis_repo = analysis_repo
         self.scorer = scorer
 
-    async def create_analysis(self, resume_id: str, user_id: str) -> Analysis:
+    async def create_analysis(self, resume_id: str) -> Analysis:
         analysis = Analysis(
             resume_id=resume_id,
-            user_id=user_id,
+            user_id=UUID(Database.ANONYMOUS_USER_ID),
             status=AnalysisStatus.PENDING,
         )
         return await self.analysis_repo.save(analysis)
-
-    async def run_analysis(self, analysis_id: str, resume_text: str):
-        """Called from Celery worker."""
 
     async def run_analysis(self, analysis_id: str, resume_text: str):
         """Called from Celery worker."""

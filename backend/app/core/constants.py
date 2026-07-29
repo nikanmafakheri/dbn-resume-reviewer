@@ -8,6 +8,7 @@ class UserRole(StrEnum):
     CANDIDATE = "candidate"
     RECRUITER = "recruiter"
     ADMIN = "admin"
+    SYSTEM = "system"
 
 
 class AnalysisStatus(StrEnum):
