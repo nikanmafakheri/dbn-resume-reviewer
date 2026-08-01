@@ -42,7 +42,11 @@ def extract_text_from_pdf(path: str | Path) -> str:
         for page_num, page in enumerate(doc, start=1):
             text = page.get_text()
             if not text.strip():
-                logger.warning("Page %d of %s has no extractable text (possibly scanned)", page_num, path.name)
+                logger.warning(
+                    "Page %d of %s has no extractable text (possibly scanned)",
+                    page_num,
+                    path.name,
+                )
             pages.append(text)
         return "\n".join(pages)
     finally:

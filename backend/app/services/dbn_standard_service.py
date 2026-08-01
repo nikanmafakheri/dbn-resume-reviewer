@@ -2,16 +2,18 @@
 
 from uuid import UUID
 
-from app.repositories.dbn_standard_repo import DBNStandardRepository
-from app.domain.models.dbn_standard import DBNStandard, DBNStandardCriterion
 from app.core.database import Database
+from app.domain.models.dbn_standard import DBNStandard
+from app.repositories.dbn_standard_repo import DBNStandardRepository
 
 
 class DBNStandardService:
     def __init__(self, standard_repo: DBNStandardRepository):
         self.standard_repo = standard_repo
 
-    async def create_standard(self, name: str, version: str, description: str | None = None) -> DBNStandard:
+    async def create_standard(
+        self, name: str, version: str, description: str | None = None
+    ) -> DBNStandard:
         standard = DBNStandard(
             name=name,
             version=version,

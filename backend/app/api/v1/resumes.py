@@ -1,16 +1,19 @@
 """Resume upload, listing, deletion, and analysis trigger."""
 
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
-from app.dependencies import get_resume_service, get_analysis_service
-from app.services.resume_service import ResumeService
-from app.services.analysis_service import AnalysisService
-from app.schemas.resume import ResumeResponse
+from app.dependencies import get_analysis_service, get_resume_service
 from app.schemas.analysis import AnalysisResponse
+from app.schemas.resume import ResumeResponse
+from app.services.analysis_service import AnalysisService
+from app.services.resume_service import ResumeService
 from app.utils.file import is_allowed_file, is_valid_file_size
 from app.utils.pdf import extract_text_from_pdf
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -25,7 +28,7 @@ async def upload_resume(
     if not is_allowed_file(filename):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File type not allowed. Allowed: .pdf, .doc, .docx",
+            detail="File type not allowed. Allowed: .pdf, .docx",
         )
 
     content = await file.read()
@@ -43,8 +46,10 @@ async def upload_resume(
             text = extract_text_from_pdf(resume.file_path)
             resume.text_content = text
             await resume_service.resume_repo.save(resume)
-        except Exception:
-            pass  # extraction failure shouldn't block upload
+        except Exception as exc:
+            # Extraction failure shouldn't block upload, but it MUST be visible:
+            # an analysis on a text-less resume would otherwise fail mysteriously.
+            logger.warning("PDF text extraction failed for %s: %s", filename, exc)
 
     return ResumeResponse.model_validate(resume)
 
@@ -60,43 +65,57 @@ async def list_resumes(
 
 @router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_resume(
-    resume_id: str,
+    resume_id: UUID,
     resume_service: ResumeService = Depends(get_resume_service),
 ):
     """Delete a resume by ID."""
-    resume = await resume_service.resume_repo.get(UUID(resume_id))
+    resume = await resume_service.resume_repo.get(resume_id)
     if not resume:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     await resume_service.resume_repo.delete(resume)
 
 
-@router.post("/{resume_id}/analyze", response_model=AnalysisResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "/{resume_id}/analyze",
+    response_model=AnalysisResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
 async def analyze_resume(
-    resume_id: str,
+    resume_id: UUID,
     resume_service: ResumeService = Depends(get_resume_service),
     analysis_service: AnalysisService = Depends(get_analysis_service),
 ):
-    """Trigger a new analysis for a resume. The analysis runs in the background via Celery."""
-    resume = await resume_service.resume_repo.get(UUID(resume_id))
+    """Trigger a new analysis for a resume.
+
+    In the MVP the scoring runs inline (Celery dispatch is unreliable without
+    Redis running). Failures are recorded on the Analysis row — never swallowed —
+    so the frontend can surface a `failed` status instead of polling forever.
+    """
+    resume = await resume_service.resume_repo.get(resume_id)
     if not resume:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    analysis = await analysis_service.create_analysis(resume_id=str(resume.id))
+    analysis = await analysis_service.create_analysis(resume_id=resume.id)
 
-    # Run analysis synchronously (Celery dispatch is unreliable without Redis running)
     if resume.text_content:
+        from app.core.constants import AnalysisStatus
+        from app.dependencies import create_scorer  # patched in tests
+        scorer = create_scorer()
         try:
-            from app.dependencies import create_scorer
-            scorer = create_scorer()
             result = await scorer.score(resume.text_content)
             analysis.overall_score = result.overall_score
             analysis.ats_score = result.ats_score
             analysis.grammar_score = result.grammar_score
             analysis.recruiter_score = result.recruiter_score
             analysis.summary = result.summary
-            from app.core.constants import AnalysisStatus
+            analysis.feedback_json = result.feedback or None
             analysis.status = AnalysisStatus.COMPLETED
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception("Analysis %s failed for resume %s", analysis.id, resume_id)
+            analysis.status = AnalysisStatus.FAILED
+            analysis.error_message = str(exc)
+    else:
+        analysis.status = AnalysisStatus.FAILED
+        analysis.error_message = "No extractable text in resume (is it a scanned PDF?)"
 
     return AnalysisResponse.model_validate(analysis)

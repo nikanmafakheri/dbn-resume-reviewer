@@ -2,10 +2,11 @@
 
 from uuid import UUID
 
-from sqlalchemy import String, Text, BigInteger, ForeignKey, JSON
+from sqlalchemy import JSON, BigInteger, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.domain.models.base import Base, TimestampMixin, UUIDMixin, GUID
+
 from app.core.constants import ResumeStatus
+from app.domain.models.base import GUID, Base, TimestampMixin, UUIDMixin
 
 
 class Resume(UUIDMixin, TimestampMixin, Base):

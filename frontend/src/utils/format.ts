@@ -5,9 +5,9 @@ export function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function formatDate(iso: string): string {
+export function formatDate(iso: string, locale: string = 'en-US'): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(locale === 'fa' ? 'fa-IR' : 'en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

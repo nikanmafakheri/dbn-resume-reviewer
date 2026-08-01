@@ -2,11 +2,11 @@
 
 from uuid import UUID
 
-from app.repositories.analysis_repo import AnalysisRepository
-from app.domain.models.analysis import Analysis
-from app.core.database import Database
-from app.core.constants import AnalysisStatus
 from app.ai.scorers.resume_scorer import ResumeScorer
+from app.core.constants import AnalysisStatus
+from app.core.database import Database
+from app.domain.models.analysis import Analysis
+from app.repositories.analysis_repo import AnalysisRepository
 
 
 class AnalysisService:
@@ -14,7 +14,7 @@ class AnalysisService:
         self.analysis_repo = analysis_repo
         self.scorer = scorer
 
-    async def create_analysis(self, resume_id: str) -> Analysis:
+    async def create_analysis(self, resume_id: UUID) -> Analysis:
         analysis = Analysis(
             resume_id=resume_id,
             user_id=UUID(Database.ANONYMOUS_USER_ID),
@@ -36,6 +36,7 @@ class AnalysisService:
             analysis.grammar_score = result.grammar_score
             analysis.recruiter_score = result.recruiter_score
             analysis.summary = result.summary
+            analysis.feedback_json = result.feedback or None
             analysis.status = AnalysisStatus.COMPLETED
         except Exception as exc:
             analysis.status = AnalysisStatus.FAILED

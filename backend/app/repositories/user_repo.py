@@ -1,7 +1,9 @@
 """User repository."""
 
 from uuid import UUID
+
 from sqlalchemy import select
+
 from app.domain.models.user import User
 from app.repositories.base import BaseRepository
 

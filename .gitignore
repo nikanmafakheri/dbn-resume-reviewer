@@ -46,3 +46,9 @@ docs/
 # Misc
 .cache/
 coverage/
+
+# Local database files (never commit dev data)
+*.db
+*.sqlite
+*.sqlite3
+backend/media/

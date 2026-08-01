@@ -1,6 +1,7 @@
 """Resume repository."""
 
 from sqlalchemy import select
+
 from app.domain.models.resume import Resume
 from app.repositories.base import BaseRepository
 

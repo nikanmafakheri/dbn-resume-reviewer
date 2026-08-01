@@ -1,7 +1,7 @@
 """SQLAlchemy 2.0 declarative base and common mixins."""
 
-from datetime import datetime
 import uuid
+from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column

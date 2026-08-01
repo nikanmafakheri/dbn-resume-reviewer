@@ -1,7 +1,6 @@
 """Custom Pydantic validators."""
 
 import re
-from pydantic import field_validator
 
 
 def validate_password(v: str) -> str:

@@ -1,10 +1,10 @@
 """User model."""
 
-import uuid
-from sqlalchemy import String, Boolean
+from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.domain.models.base import Base, TimestampMixin, UUIDMixin
+
 from app.core.constants import UserRole
+from app.domain.models.base import Base, TimestampMixin, UUIDMixin
 
 
 class User(UUIDMixin, TimestampMixin, Base):

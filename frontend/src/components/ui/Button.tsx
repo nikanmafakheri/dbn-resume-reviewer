@@ -1,41 +1,46 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger';
-  loading?: boolean;
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'soft' | 'link';
+type ButtonSize = 'sm' | 'md' | 'lg' | 'xl' | 'icon';
+
+const VARIANTS: Record<ButtonVariant, string> = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  ghost: 'btn-ghost',
+  danger: 'btn-danger',
+  soft: 'btn-soft',
+  link: 'btn-link',
+};
+
+const SIZES: Record<ButtonSize, string> = {
+  sm: 'btn-sm',
+  md: '',
+  lg: 'btn-lg',
+  xl: 'btn-xl',
+  icon: 'btn-icon',
+};
+
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  block?: boolean;
   children: ReactNode;
 }
 
-const variants = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-  secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-500',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-};
-
 export function Button({
   variant = 'primary',
-  loading = false,
-  children,
+  size = 'md',
+  block = false,
   className = '',
-  disabled,
-  ...props
+  children,
+  ...rest
 }: ButtonProps) {
+  const classes = ['btn', VARIANTS[variant], SIZES[size], block ? 'btn-block' : '', className]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <button
-      className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading && (
-        <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-      )}
+    <button className={classes} {...rest}>
       {children}
     </button>
   );

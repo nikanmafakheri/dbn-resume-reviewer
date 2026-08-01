@@ -3,21 +3,19 @@
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
 
-from app.core.config import settings
-from app.domain.models.base import Base
+import app.domain.models.analysis  # noqa: F401
+import app.domain.models.dbn_standard  # noqa: F401
+import app.domain.models.resume  # noqa: F401
 
 # Import all models so they register with Base.metadata
 import app.domain.models.user  # noqa: F401
-import app.domain.models.resume  # noqa: F401
-import app.domain.models.analysis  # noqa: F401
-import app.domain.models.dbn_standard  # noqa: F401
+from app.core.config import settings
+from app.domain.models.base import Base
 
 
 class Database:
@@ -36,7 +34,6 @@ class Database:
     @staticmethod
     def _create_engine(url: str):
         """Create async SQLAlchemy engine with sensible defaults."""
-        from sqlalchemy.ext.asyncio import create_async_engine
 
         return create_async_engine(
             str(url),
@@ -58,18 +55,26 @@ class Database:
     def get_session_factory(self):
         return self.session_factory
 
-    async def init_db(self) -> None:
-        """Create all tables defined by SQLAlchemy models, then seed defaults."""
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    async def init_db(self, create_tables: bool = True) -> None:
+        """Create tables (dev bootstrap) and seed defaults, idempotently.
+
+        In production, migrations own the schema: pass ``create_tables=False``
+        (e.g. after `alembic upgrade head`) and this only seeds reference data
+        (anonymous user + default standard) that does not already exist.
+        """
+        if create_tables:
+            async with self.engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
 
         # Seed anonymous user and default DBN Standard
         from uuid import UUID
-        from sqlalchemy import select, text
-        from app.domain.models.user import User
-        from app.domain.models.dbn_standard import DBNStandard, DBNStandardCriterion
+
+        from sqlalchemy import select
+
         from app.core.constants import UserRole
         from app.core.security import hash_password
+        from app.domain.models.dbn_standard import DBNStandard, DBNStandardCriterion
+        from app.domain.models.user import User
 
         async with self.session_factory() as session:
             # Check if anonymous user already exists
@@ -180,10 +185,10 @@ async def get_db() -> AsyncSession:
             raise
 
 
-async def init_db() -> None:
+async def init_db(create_tables: bool = True) -> None:
     """Initialize DB tables (called on app startup)."""
     db = get_database()
-    await db.init_db()
+    await db.init_db(create_tables=create_tables)
 
 
 async def close_db() -> None:

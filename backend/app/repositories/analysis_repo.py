@@ -1,6 +1,7 @@
 """Analysis repository."""
 
 from sqlalchemy import select
+
 from app.domain.models.analysis import Analysis
 from app.repositories.base import BaseRepository
 

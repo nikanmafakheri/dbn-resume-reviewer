@@ -1,17 +1,14 @@
+/* ============================================================
+   DBN DESIGN SYSTEM — Entry
+   Import order matters for Tailwind v4.
+   ============================================================ */
+
+/* 1. Framework + raw design tokens (colors, type, spacing, …) */
 @import "tailwindcss";
+@import "./styles/tokens.css";
 
-:root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+/* 2. Semantic light/dark theme + base styles */
+@import "./styles/theme.css";
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #f8fafc;
-}
+/* 3. Component classes (buttons, cards, inputs, progress, …) */
+@import "./styles/components.css";

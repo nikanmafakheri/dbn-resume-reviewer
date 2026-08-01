@@ -2,9 +2,9 @@
 
 from fastapi import APIRouter
 
-from .resumes import router as resumes_router
 from .analysis import router as analysis_router
 from .dbn_standard import router as dbn_standard_router
+from .resumes import router as resumes_router
 
 router = APIRouter()
 

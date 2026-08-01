@@ -1,6 +1,6 @@
 """Custom exception classes and FastAPI exception handlers."""
 
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi.responses import JSONResponse
 
 
@@ -38,7 +38,3 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
         status_code=exc.status_code,
         content={"detail": exc.message, "code": exc.code},
     )
-
-
-# Mapping to register on the app
-exception_handlers: dict[int, type[AppException]] = {}  # populated in main.py

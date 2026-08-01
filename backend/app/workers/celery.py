@@ -1,6 +1,7 @@
 """Celery app configuration."""
 
 from celery import Celery
+
 from app.core.config import settings
 
 celery_app = Celery(
@@ -21,3 +22,12 @@ celery_app.conf.update(
 
 # Auto-discover tasks in the workers package
 celery_app.autodiscover_tasks(["app.workers"])
+
+# Recurring housekeeping: sweep stale uploads hourly (only meaningful when
+# celery-beat is running, which docker-compose starts).
+celery_app.conf.beat_schedule = {
+    "cleanup-stale-uploads": {
+        "task": "app.workers.cleanup.cleanup_stale_uploads",
+        "schedule": 3600.0,
+    },
+}

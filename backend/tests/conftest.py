@@ -11,13 +11,13 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.main import create_app
 from app.core.config import settings
+from app.core.constants import UserRole
 from app.core.database import get_db
+from app.core.security import hash_password
 from app.domain.models.base import Base
 from app.domain.models.user import User
-from app.core.constants import AnalysisStatus, ResumeStatus, UserRole
-from app.core.security import hash_password
+from app.main import create_app
 
 # Use a separate test database
 TEST_DATABASE_URL = settings.DATABASE_URL
@@ -88,17 +88,6 @@ async def test_user(db_session: AsyncSession) -> User:
     db_session.add(user)
     await db_session.flush()
     return user
-
-
-@pytest_asyncio.fixture
-async def auth_headers(client: AsyncClient, test_user: User) -> dict[str, str]:
-    """Get JWT auth headers for the test user."""
-    response = await client.post(
-        "/api/v1/auth/login",
-        json={"email": "test@example.com", "password": "TestPass123"},
-    )
-    token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture

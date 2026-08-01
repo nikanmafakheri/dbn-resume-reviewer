@@ -67,7 +67,7 @@ def upgrade() -> None:
         sa.Column("mime_type", sa.String(100), nullable=True),
         sa.Column("status", sa.String(50), nullable=False),
         sa.Column("text_content", sa.Text(), nullable=True),
-        sa.Column("metadata", sa.Text(), nullable=True),
+        sa.Column("metadata", postgresql.JSON(), nullable=True),
         sa.Column(
             "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
         ),
@@ -91,7 +91,7 @@ def upgrade() -> None:
         sa.Column("grammar_score", sa.Float(), nullable=True),
         sa.Column("recruiter_score", sa.Float(), nullable=True),
         sa.Column("summary", sa.Text(), nullable=True),
-        sa.Column("feedback_json", sa.Text(), nullable=True),
+        sa.Column("feedback_json", postgresql.JSON(), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("processing_time_ms", sa.Integer(), nullable=True),
         sa.Column(

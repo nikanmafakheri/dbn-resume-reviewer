@@ -3,14 +3,13 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 from sqlalchemy import select
 
-from app.workers.celery import celery_app
 from app.core.config import settings
-from app.core.database import init_database, get_database
+from app.core.database import get_database, init_database
 from app.domain.models.resume import Resume
+from app.workers.celery import celery_app
 
 logger = logging.getLogger(__name__)
 

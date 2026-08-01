@@ -9,6 +9,7 @@ export interface AnalysisResponse {
   grammar_score: number | null;
   recruiter_score: number | null;
   summary: string | null;
+  feedback: Record<string, unknown>;
   error_message: string | null;
   created_at: string;
 }

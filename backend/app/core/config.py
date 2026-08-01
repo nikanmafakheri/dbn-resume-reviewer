@@ -8,12 +8,20 @@ from typing import Literal
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# .env lives at the backend project root (sibling of the `app/` package).
+# Resolve it absolutely so startup never depends on the CWD (Docker workers,
+# pytest, systemd, etc.).
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_BACKEND_ROOT / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # Ignore legacy/extra env vars (e.g. old JWT settings) instead of
+        # crashing startup on an outdated .env.
+        extra="ignore",
     )
 
     # ── App ──────────────────────────────────────────
@@ -23,10 +31,9 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
 
     # ── Security ─────────────────────────────────────
-    SECRET_KEY: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    ALGORITHM: str = "HS256"
+    # Dev-only default so a fresh checkout boots without a .env. Override in
+    # production via the SECRET_KEY env var — never ship the default.
+    SECRET_KEY: str = "dev-only-insecure-secret-change-me"
 
     # ── Database ─────────────────────────────────────
     DATABASE_URL: str = "sqlite+aiosqlite:///./dbn_resume.db"
@@ -36,6 +43,8 @@ class Settings(BaseSettings):
 
     # ── Redis ────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
+    RATE_LIMIT_MAX_REQUESTS: int = 60
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
 
     # ── Media / Uploads ──────────────────────────────
     MEDIA_ROOT: Path = Path("media")
@@ -46,6 +55,7 @@ class Settings(BaseSettings):
 
     # ── LLM Provider ─────────────────────────────────
     LLM_PROVIDER: Literal["gemini", "openai", "claude", "openrouter"] = "gemini"
+    GEMINI_MODEL: str = "gemini-2.0-flash"
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     CLAUDE_API_KEY: str | None = None
@@ -68,7 +78,10 @@ class Settings(BaseSettings):
     @field_validator("MEDIA_ROOT", mode="before")
     @classmethod
     def resolve_media_root(cls, v: str | Path) -> Path:
-        return Path(v).resolve()
+        path = Path(v)
+        if not path.is_absolute():
+            path = _BACKEND_ROOT / path
+        return path.resolve()
 
 
 settings = Settings()  # type: ignore[call-arg]

@@ -1,8 +1,8 @@
 """Redis-backed sliding-window rate limiter middleware."""
 
-import time
 import logging
-from collections.abc import Callable, Awaitable
+import time
+from collections.abc import Awaitable, Callable
 
 from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -35,7 +35,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Skip rate-limiting for health / docs
-        if request.url.path in ("/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"):
+        if request.url.path in (
+            "/health", "/ready", "/metrics", "/docs", "/redoc", "/openapi.json"
+        ):
             return await call_next(request)
 
         client_ip = request.client.host if request.client else "unknown"

@@ -3,10 +3,10 @@
 import asyncio
 import logging
 
-from app.workers.celery import celery_app
-from app.core.database import init_database, get_database
 from app.core.constants import AnalysisStatus
+from app.core.database import get_database, init_database
 from app.dependencies import create_scorer
+from app.workers.celery import celery_app
 
 logger = logging.getLogger(__name__)
 

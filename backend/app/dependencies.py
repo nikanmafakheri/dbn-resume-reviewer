@@ -2,16 +2,16 @@
 
 from fastapi import Depends
 
-from app.core.database import get_db
-from app.repositories.resume_repo import ResumeRepository
-from app.repositories.analysis_repo import AnalysisRepository
-from app.repositories.dbn_standard_repo import DBNStandardRepository
-from app.services.resume_service import ResumeService
-from app.services.analysis_service import AnalysisService
-from app.services.scoring_service import ScoringService
-from app.services.dbn_standard_service import DBNStandardService
 from app.ai.scorers.resume_scorer import ResumeScorer
 from app.core.config import settings
+from app.core.database import get_db
+from app.repositories.analysis_repo import AnalysisRepository
+from app.repositories.dbn_standard_repo import DBNStandardRepository
+from app.repositories.resume_repo import ResumeRepository
+from app.services.analysis_service import AnalysisService
+from app.services.dbn_standard_service import DBNStandardService
+from app.services.resume_service import ResumeService
+from app.services.scoring_service import ScoringService
 
 
 # ── Repositories ──
@@ -80,5 +80,7 @@ def get_scoring_service(repo: DBNStandardRepository = Depends(get_standard_repo)
     return ScoringService(repo)
 
 
-def get_standard_service(repo: DBNStandardRepository = Depends(get_standard_repo)) -> DBNStandardService:
+def get_standard_service(
+    repo: DBNStandardRepository = Depends(get_standard_repo),
+) -> DBNStandardService:
     return DBNStandardService(repo)

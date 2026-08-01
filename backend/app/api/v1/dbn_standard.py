@@ -1,11 +1,11 @@
 """DBN Standard (scoring rubric) routes."""
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from app.dependencies import get_standard_service, get_scoring_service
+from app.dependencies import get_scoring_service, get_standard_service
+from app.schemas.dbn_standard import StandardCreate, StandardResponse
 from app.services.dbn_standard_service import DBNStandardService
 from app.services.scoring_service import ScoringService
-from app.schemas.dbn_standard import StandardCreate, StandardResponse
 
 router = APIRouter()
 
@@ -32,14 +32,14 @@ async def download_standard(
 
     lines = [
         f"# {standard.name}",
-        f"",
+        "",
         f"**Version:** {standard.version}",
         f"**Description:** {standard.description or 'N/A'}",
-        f"",
-        f"## Scoring Criteria",
-        f"",
-        f"| # | Criterion | Description | Weight | Max Score |",
-        f"|---|-----------|-------------|--------|-----------|",
+        "",
+        "## Scoring Criteria",
+        "",
+        "| # | Criterion | Description | Weight | Max Score |",
+        "|---|-----------|-------------|--------|-----------|",
     ]
     for criterion in standard.criteria:
         lines.append(

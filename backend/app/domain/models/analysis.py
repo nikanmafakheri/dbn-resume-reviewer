@@ -2,10 +2,11 @@
 
 from uuid import UUID
 
-from sqlalchemy import String, Text, Float, Integer, ForeignKey, JSON
+from sqlalchemy import JSON, Float, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.domain.models.base import Base, TimestampMixin, UUIDMixin, GUID
+
 from app.core.constants import AnalysisStatus
+from app.domain.models.base import GUID, Base, TimestampMixin, UUIDMixin
 
 
 class Analysis(UUIDMixin, TimestampMixin, Base):
@@ -13,7 +14,9 @@ class Analysis(UUIDMixin, TimestampMixin, Base):
 
     resume_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("resumes.id"))
     user_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"))
-    dbn_standard_id: Mapped[UUID | None] = mapped_column(GUID(), ForeignKey("dbn_standards.id"), nullable=True)
+    dbn_standard_id: Mapped[UUID | None] = mapped_column(
+        GUID(), ForeignKey("dbn_standards.id"), nullable=True
+    )
     status: Mapped[AnalysisStatus]
     overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     ats_score: Mapped[float | None] = mapped_column(Float, nullable=True)

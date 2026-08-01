@@ -1,14 +1,13 @@
 """Unit tests for utility functions."""
 
+from app.utils.datetime import isoformat, utcnow
 from app.utils.file import is_allowed_file, is_valid_file_size
-from app.utils.datetime import utcnow, isoformat
 from app.utils.validators import validate_password
 
 
 class TestFileUtils:
     def test_allowed_extensions(self):
         assert is_allowed_file("resume.pdf") is True
-        assert is_allowed_file("resume.doc") is True
         assert is_allowed_file("resume.docx") is True
 
     def test_disallowed_extensions(self):

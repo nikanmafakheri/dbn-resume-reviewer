@@ -2,8 +2,7 @@
 
 from pathlib import Path
 
-
-ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
+ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
