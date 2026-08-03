@@ -1,0 +1,4 @@
+/home/nikan/Documents/resume-reviewer/backend/app/ai/prompts/ats.md
+/home/nikan/Documents/resume-reviewer/backend/app/ai/prompts/cover_letter.md
+/home/nikan/Documents/resume-reviewer/backend/app/ai/prompts/grammar.md
+/home/nikan/Documents/resume-reviewer/backend/app/ai/prompts/resume_analysis.md

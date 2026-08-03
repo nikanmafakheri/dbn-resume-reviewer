@@ -103,12 +103,7 @@ async def analyze_resume(
         scorer = create_scorer()
         try:
             result = await scorer.score(resume.text_content)
-            analysis.overall_score = result.overall_score
-            analysis.ats_score = result.ats_score
-            analysis.grammar_score = result.grammar_score
-            analysis.recruiter_score = result.recruiter_score
-            analysis.summary = result.summary
-            analysis.feedback_json = result.feedback or None
+            AnalysisService._apply_result(analysis, result)
             analysis.status = AnalysisStatus.COMPLETED
         except Exception as exc:
             logger.exception("Analysis %s failed for resume %s", analysis.id, resume_id)

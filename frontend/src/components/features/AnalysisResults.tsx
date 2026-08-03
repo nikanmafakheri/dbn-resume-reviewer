@@ -5,13 +5,55 @@ import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
 import { getBandKey } from '../ui/ScoreRing';
 import { API_BASE_URL } from '../../lib/api';
+import type { ScoreResult } from '../../types/analysis';
+
+/** Renders a titled list of strengths / weaknesses / missing skills / recommendations. */
+function InsightCard({
+  title,
+  items,
+  empty,
+  muted,
+}: {
+  title: string;
+  items: string[];
+  empty: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="card-flat anim-fade-up flex flex-col gap-3 p-6">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+        {title}
+      </p>
+      {items.length === 0 ? (
+        <p className="text-sm italic text-[var(--text-secondary)]">{empty}</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {items.map((item) => (
+            <li key={item} className="flex items-start gap-2 text-sm leading-relaxed">
+              <span
+                className={`mt-1 h-1.5 w-1.5 shrink-0 rounded-full ${
+                  muted ? 'bg-[var(--brand)]' : 'bg-[var(--text-secondary)]'
+                }`}
+              />
+              <span className="text-[var(--text-primary)]">{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 interface ScoreData {
   overall_score: number | null;
   ats_score: number | null;
-  grammar_score: number | null;
-  recruiter_score: number | null;
+  skills_score: number | null;
+  experience_score: number | null;
+  formatting_score: number | null;
+  content_score: number | null;
   summary: string | null;
+  feedback: Record<string, unknown>;
+  scores_json: ScoreResult | null;
   status: string;
   error_message: string | null;
 }
@@ -26,7 +68,7 @@ interface AnalysisResultsProps {
 const POLL_INTERVAL = 3000;
 
 export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResultsProps) {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [data, setData] = useState<ScoreData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,11 +191,21 @@ export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResult
 
   // Completed dashboard
   const overall = data?.overall_score ?? 0;
-  const subScores: { key: 'analysis.ats' | 'analysis.grammar' | 'analysis.recruiter'; value: number }[] = [
+  const subScores: { key: 'analysis.ats' | 'analysis.skills' | 'analysis.experience' | 'analysis.formatting' | 'analysis.content'; value: number }[] = [
     { key: 'analysis.ats', value: data?.ats_score ?? 0 },
-    { key: 'analysis.grammar', value: data?.grammar_score ?? 0 },
-    { key: 'analysis.recruiter', value: data?.recruiter_score ?? 0 },
+    { key: 'analysis.skills', value: data?.skills_score ?? 0 },
+    { key: 'analysis.experience', value: data?.experience_score ?? 0 },
+    { key: 'analysis.formatting', value: data?.formatting_score ?? 0 },
+    { key: 'analysis.content', value: data?.content_score ?? 0 },
   ];
+
+  const feedback = data?.feedback ?? {};
+  const strengths = (feedback.strengths as string[]) ?? data?.scores_json?.strengths ?? [];
+  const weaknesses = (feedback.weaknesses as string[]) ?? data?.scores_json?.weaknesses ?? [];
+  const missingSkills = (feedback.missing_skills as string[]) ?? data?.scores_json?.missing_skills ?? [];
+  const recommendations =
+    (feedback.actionable_recommendations as string[]) ??
+    data?.scores_json?.actionable_recommendations ?? [];
 
   return (
     <Section id="results" size="sm" className="max-w-4xl">
@@ -192,6 +244,46 @@ export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResult
           <p className="text-[15px] leading-relaxed text-[var(--text-secondary)]">{data.summary}</p>
         </div>
       )}
+
+      {/* Persian professional analysis (shown in fa locale; always stored) */}
+      {data?.analysis_fa && (
+        <div
+          className="card-flat anim-fade-up mt-12 p-7"
+          style={{ animationDelay: '135ms', direction: 'rtl', textAlign: 'right' }}
+        >
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+            {t('analysis.persianAnalysis')}
+          </p>
+          <p className="whitespace-pre-line text-[15px] leading-relaxed text-[var(--text-primary)]">
+            {data.analysis_fa}
+          </p>
+        </div>
+      )}
+
+      {/* Insights */}
+      <div className="stagger mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <InsightCard
+          title={t('analysis.strengths')}
+          items={strengths}
+          empty={t('analysis.noStrengths')}
+        />
+        <InsightCard
+          title={t('analysis.weaknesses')}
+          items={weaknesses}
+          empty={t('analysis.noWeaknesses')}
+        />
+        <InsightCard
+          title={t('analysis.missingSkills')}
+          items={missingSkills}
+          empty={t('analysis.noMissingSkills')}
+        />
+        <InsightCard
+          title={t('analysis.recommendations')}
+          items={recommendations}
+          empty={t('analysis.noRecommendations')}
+          muted
+        />
+      </div>
 
       {/* Analyze another resume */}
       <div className="anim-fade-up mt-10 flex justify-center" style={{ animationDelay: '160ms' }}>

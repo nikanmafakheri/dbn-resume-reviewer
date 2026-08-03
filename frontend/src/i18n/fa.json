@@ -32,15 +32,26 @@
     "processingHint": "این کار معمولاً چند ثانیه طول می‌کشد",
     "overall": "کلی",
     "ats": "امتیاز ATS",
-    "grammar": "دستور زبان",
-    "recruiter": "استخدام‌کننده",
     "summary": "خلاصه",
     "band": {
       "low": "نیاز به بهبود",
       "mid": "در مسیر",
       "good": "قوی",
       "great": "عالی"
-    }
+    },
+    "skills": "مهارت‌ها",
+    "experience": "تجربه",
+    "formatting": "قالب‌بندی",
+    "content": "کیفیت محتوا",
+    "strengths": "نقاط قوت",
+    "weaknesses": "نقاط ضعف",
+    "missingSkills": "مهارت‌های غایب",
+    "recommendations": "توصیه‌های عملی",
+    "noStrengths": "نقطه قوتی شناسایی نشد.",
+    "noWeaknesses": "نقطه ضعفی شناسایی نشد.",
+    "noMissingSkills": "مهارت غایبی شناسایی نشد.",
+    "noRecommendations": "توصیه‌ای در دسترس نیست.",
+    "persianAnalysis": "Professional Analysis (فارسی)"
   },
   "how": {
     "eyebrow": "نحوه عملکرد",

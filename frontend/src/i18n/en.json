@@ -32,15 +32,26 @@
     "processingHint": "This usually takes a few seconds",
     "overall": "Overall",
     "ats": "ATS Score",
-    "grammar": "Grammar",
-    "recruiter": "Recruiter",
     "summary": "Summary",
     "band": {
       "low": "Needs work",
       "mid": "Getting there",
       "good": "Strong",
       "great": "Excellent"
-    }
+    },
+    "skills": "Skills",
+    "experience": "Experience",
+    "formatting": "Formatting",
+    "content": "Content Quality",
+    "strengths": "Strengths",
+    "weaknesses": "Weaknesses",
+    "missingSkills": "Missing Skills",
+    "recommendations": "Actionable Recommendations",
+    "noStrengths": "No strengths identified.",
+    "noWeaknesses": "No weaknesses identified.",
+    "noMissingSkills": "No missing skills identified.",
+    "noRecommendations": "No recommendations available.",
+    "persianAnalysis": "Professional Analysis (فارسی)"
   },
   "how": {
     "eyebrow": "How it works",

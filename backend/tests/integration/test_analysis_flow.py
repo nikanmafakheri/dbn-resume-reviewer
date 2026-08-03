@@ -11,9 +11,44 @@ import pytest
 
 from app.core.constants import AnalysisStatus, UserRole
 from app.core.database import Database
+from app.core.scoring import weighted_overall
 from app.domain.models.resume import Resume
 from app.domain.models.user import User
-from app.schemas.analysis import ScoreResult
+from app.schemas.analysis import Confidence, DimensionScore, ScoreResult
+
+
+def _fake_result() -> ScoreResult:
+    """A fully-valid, deterministic ScoreResult for the scoring contract."""
+    dimensions = {
+        name: DimensionScore(
+            score=score,
+            justification=(
+                f"A defensible justification for the {name} dimension that is long enough."
+            ),
+        )
+        for name, score in {
+            "ats": 72.0,
+            "skills": 85.0,
+            "experience": 88.0,
+            "formatting": 91.0,
+            "content": 80.0,
+        }.items()
+    }
+    return ScoreResult(
+        dimensions=dimensions,
+        overall=weighted_overall({name: d.score for name, d in dimensions.items()}),
+        confidence=Confidence(label="high", score=1.0, justifications_valid=5),
+        strengths=["Clear structure", "Strong Python expertise"],
+        weaknesses=["Few quantified metrics"],
+        missing_skills=["Kubernetes"],
+        actionable_recommendations=["Add quantified impact to 2023 role"],
+        summary="Strong resume overall.",
+        summary_en="Strong resume overall.",
+        analysis_fa=(
+            "رزومه ساختار منظمی دارد و تجربه فنی به‌خوبی مستند شده است؛ اما "
+            "می‌تواند با افزودن معیارهای کمی تأثیرگذاری بیشتری داشته باشد."
+        ),
+    )
 
 
 class FakeScorer:
@@ -26,13 +61,7 @@ class FakeScorer:
     async def score(self, resume_text: str) -> ScoreResult:
         if self.exc is not None:
             raise self.exc
-        return self.result or ScoreResult(
-            overall_score=88.0,
-            ats_score=72.0,
-            grammar_score=91.0,
-            recruiter_score=80.0,
-            summary="Strong resume overall.",
-        )
+        return self.result or _fake_result()
 
 
 async def _seed_resume(db_session) -> str:
@@ -75,9 +104,19 @@ async def test_upload_and_analyze_flow(client, db_session, monkeypatch):
     body = resp.json()
     assert body["id"] is not None
     assert body["status"] == AnalysisStatus.COMPLETED
-    assert body["overall_score"] == 88.0
+    # Overall is the deterministic weighted mean of the dimensions.
+    assert body["overall_score"] == pytest.approx(82.35, abs=0.01)
     assert body["ats_score"] == 72.0
+    assert body["skills_score"] == 85.0
+    assert body["experience_score"] == 88.0
+    assert body["formatting_score"] == 91.0
+    assert body["content_score"] == 80.0
     assert body["summary"] == "Strong resume overall."
+    assert body["summary_en"] == "Strong resume overall."
+    assert body["analysis_fa"].startswith("رزومه")
+    assert body["scores_json"]["dimensions"]["ats"]["score"] == 72.0
+    assert body["scores_json"]["dimensions"]["ats"]["justification"]
+    assert body["scores_json"]["confidence"]["label"] == "high"
 
 
 @pytest.mark.asyncio

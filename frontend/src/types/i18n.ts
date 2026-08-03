@@ -11,17 +11,28 @@ export type TranslationKey =
   'analysis.band.mid' |
   'analysis.cancel' |
   'analysis.completed' |
+  'analysis.content' |
   'analysis.errorTitle' |
+  'analysis.experience' |
   'analysis.failed' |
-  'analysis.grammar' |
+  'analysis.formatting' |
+  'analysis.missingSkills' |
+  'analysis.noMissingSkills' |
+  'analysis.noRecommendations' |
+  'analysis.noStrengths' |
+  'analysis.noWeaknesses' |
   'analysis.overall' |
   'analysis.pending' |
+  'analysis.persianAnalysis' |
   'analysis.processing' |
   'analysis.processingHint' |
-  'analysis.recruiter' |
+  'analysis.recommendations' |
   'analysis.retry' |
+  'analysis.skills' |
+  'analysis.strengths' |
   'analysis.subtitle' |
   'analysis.summary' |
+  'analysis.weaknesses' |
   'footer.copyright' |
   'footer.github' |
   'footer.instagram' |

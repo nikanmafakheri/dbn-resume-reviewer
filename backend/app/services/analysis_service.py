@@ -5,6 +5,7 @@ from uuid import UUID
 from app.ai.scorers.resume_scorer import ResumeScorer
 from app.core.constants import AnalysisStatus
 from app.core.database import Database
+from app.core.scoring import DIMENSIONS
 from app.domain.models.analysis import Analysis
 from app.repositories.analysis_repo import AnalysisRepository
 
@@ -31,13 +32,33 @@ class AnalysisService:
         analysis.status = AnalysisStatus.PROCESSING
         try:
             result = await self.scorer.score(resume_text)
-            analysis.overall_score = result.overall_score
-            analysis.ats_score = result.ats_score
-            analysis.grammar_score = result.grammar_score
-            analysis.recruiter_score = result.recruiter_score
-            analysis.summary = result.summary
-            analysis.feedback_json = result.feedback or None
+            self._apply_result(analysis, result)
             analysis.status = AnalysisStatus.COMPLETED
         except Exception as exc:
             analysis.status = AnalysisStatus.FAILED
             analysis.error_message = str(exc)
+
+    @staticmethod
+    def _apply_result(analysis: Analysis, result) -> None:
+        """Persist a validated ScoreResult into the Analysis row.
+
+        Mirrors the five dimension scores into dedicated columns for cheap
+        filtering and stores the full nested result (dimensions with
+        justifications, confidence, strengths/weaknesses/recommendations) in
+        ``scores_json``. The overall score is the deterministic weighted mean
+        already computed by the parser — never read from the LLM.
+        """
+        analysis.overall_score = result.overall
+        analysis.ats_score = result.dimensions["ats"].score
+        for name in DIMENSIONS:
+            setattr(analysis, f"{name}_score", result.dimensions[name].score)
+        analysis.summary = result.summary
+        analysis.summary_en = result.summary_en
+        analysis.analysis_fa = result.analysis_fa
+        analysis.feedback_json = {
+            "strengths": result.strengths,
+            "weaknesses": result.weaknesses,
+            "missing_skills": result.missing_skills,
+            "actionable_recommendations": result.actionable_recommendations,
+        }
+        analysis.scores_json = result.model_dump()
