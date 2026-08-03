@@ -3,11 +3,20 @@
 import asyncio
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from alembic import context
+# Import all models so Base.metadata is complete (must register before
+# target_metadata is read below).
+from app.domain.models import (
+    analysis,  # noqa: F401
+    dbn_standard,  # noqa: F401
+    resume,  # noqa: F401
+    user,  # noqa: F401
+)
+from app.domain.models.base import Base
 
 # Alembic Config object
 config = context.config
@@ -15,13 +24,6 @@ config = context.config
 # Set up Python logging from the alembic.ini [loggers] section
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-# Import all models so Base.metadata is complete
-from app.domain.models.base import Base
-from app.domain.models import user       # noqa: F401
-from app.domain.models import resume     # noqa: F401
-from app.domain.models import analysis   # noqa: F401
-from app.domain.models import dbn_standard  # noqa: F401
 
 target_metadata = Base.metadata
 

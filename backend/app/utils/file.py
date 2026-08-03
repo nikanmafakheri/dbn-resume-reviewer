@@ -1,7 +1,8 @@
 """File upload validation and security utilities."""
 
-import magic
 from pathlib import Path
+
+import magic
 
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 ALLOWED_MIME_TYPES = {

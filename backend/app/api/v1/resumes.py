@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
+from app.core.constants import AnalysisStatus
 from app.dependencies import get_analysis_service, get_resume_service
 from app.schemas.analysis import AnalysisResponse
 from app.schemas.resume import ResumeResponse
@@ -98,7 +99,6 @@ async def analyze_resume(
     analysis = await analysis_service.create_analysis(resume_id=resume.id)
 
     if resume.text_content:
-        from app.core.constants import AnalysisStatus
         from app.dependencies import create_scorer  # patched in tests
         scorer = create_scorer()
         try:

@@ -52,6 +52,7 @@ interface ScoreData {
   formatting_score: number | null;
   content_score: number | null;
   summary: string | null;
+  analysis_fa: string | null;
   feedback: Record<string, unknown>;
   scores_json: ScoreResult | null;
   status: string;
@@ -68,7 +69,7 @@ interface AnalysisResultsProps {
 const POLL_INTERVAL = 3000;
 
 export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResultsProps) {
-  const { t, locale } = useLanguage();
+  const { t } = useLanguage();
   const [data, setData] = useState<ScoreData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

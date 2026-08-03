@@ -6,13 +6,12 @@ between the ORM models and the migration matters: `Base.metadata.create_all`
 otherwise autogenerate drifts.
 """
 
-from app.domain.models.base import Base
-
 # Import models so they register on Base.metadata.
 import app.domain.models.analysis  # noqa: F401
 import app.domain.models.dbn_standard  # noqa: F401
 import app.domain.models.resume  # noqa: F401
 import app.domain.models.user  # noqa: F401
+from app.domain.models.base import Base
 
 
 def _table_index_columns(table_name: str) -> dict[str, tuple[str, ...]]:

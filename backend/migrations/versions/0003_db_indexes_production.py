@@ -27,7 +27,11 @@ def upgrade() -> None:
     op.create_index("ix_analyses_user_id", "analyses", ["user_id"])
     op.create_index("ix_analyses_dbn_standard_id", "analyses", ["dbn_standard_id"])
     op.create_index("ix_resumes_user_id", "resumes", ["user_id"])
-    op.create_index("ix_dbn_standard_criteria_dbn_standard_id", "dbn_standard_criteria", ["dbn_standard_id"])
+    op.create_index(
+        "ix_dbn_standard_criteria_dbn_standard_id",
+        "dbn_standard_criteria",
+        ["dbn_standard_id"],
+    )
     op.create_index("ix_dbn_standards_created_by", "dbn_standards", ["created_by"])
 
     # ── Listing / newest-first indexes ────────────────

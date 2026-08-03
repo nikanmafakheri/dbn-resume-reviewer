@@ -63,7 +63,12 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app = create_app()
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-        yield db_session
+        try:
+            yield db_session
+            await db_session.flush()
+        except Exception:
+            await db_session.rollback()
+            raise
 
     app.dependency_overrides[get_db] = override_get_db
 
