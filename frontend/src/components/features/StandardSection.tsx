@@ -34,8 +34,8 @@ export function StandardSection() {
 
   const handleDownload = () => {
     const a = document.createElement('a');
-    a.href = `${API_BASE_URL}/dbn-standards/download`;
-    a.download = 'dbn-standard.md';
+    a.href = `${API_BASE_URL}/dbn-standards/template/download`;
+    a.download = 'dbn-standard-resume-template.pptx';
     a.click();
   };
 

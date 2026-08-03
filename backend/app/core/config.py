@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     # ── Media / Uploads ──────────────────────────────
     MEDIA_ROOT: Path = Path("media")
 
+    # ── Standard template download ───────────────────
+    # Path to the downloadable DBN Standard resume template (.pptx). Relative
+    # paths resolve against the repo root (one level above the backend/ pkg),
+    # so this is `dbn-standard-resume-template/<file>.pptx`.
+    TEMPLATE_PPTX_PATH: Path = Path(
+        "dbn-standard-resume-template/Black and White Minimalist Professional Resume A4.pptx"
+    )
+
     # ── CORS ─────────────────────────────────────────
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
     CORS_ALLOW_CREDENTIALS: bool = True
@@ -81,6 +89,15 @@ class Settings(BaseSettings):
         path = Path(v)
         if not path.is_absolute():
             path = _BACKEND_ROOT / path
+        return path.resolve()
+
+    @field_validator("TEMPLATE_PPTX_PATH", mode="before")
+    @classmethod
+    def resolve_template_pptx(cls, v: str | Path) -> Path:
+        path = Path(v)
+        if not path.is_absolute():
+            # Template lives at the repo root (one level above backend/).
+            path = _BACKEND_ROOT.parent / path
         return path.resolve()
 
 

@@ -15,7 +15,9 @@ class DBNStandard(UUIDMixin, TimestampMixin, Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     version: Mapped[str] = mapped_column(String(20))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_by: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"))
+    created_by: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("users.id"), index=True
+    )
 
     criteria = relationship("DBNStandardCriterion", back_populates="standard", lazy="selectin")
 
@@ -23,7 +25,9 @@ class DBNStandard(UUIDMixin, TimestampMixin, Base):
 class DBNStandardCriterion(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "dbn_standard_criteria"
 
-    dbn_standard_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("dbn_standards.id"))
+    dbn_standard_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("dbn_standards.id"), index=True
+    )
     name: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     weight: Mapped[float] = mapped_column(Float)

@@ -9,7 +9,7 @@ kept so historical rows remain readable.
 
 from uuid import UUID
 
-from sqlalchemy import JSON, Float, ForeignKey, Integer, Text
+from sqlalchemy import JSON, Float, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.constants import AnalysisStatus
@@ -18,13 +18,21 @@ from app.domain.models.base import GUID, Base, TimestampMixin, UUIDMixin
 
 class Analysis(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "analyses"
-
-    resume_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("resumes.id"))
-    user_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"))
-    dbn_standard_id: Mapped[UUID | None] = mapped_column(
-        GUID(), ForeignKey("dbn_standards.id"), nullable=True
+    __table_args__ = (
+        # newest-first listing (list_all)
+        Index("ix_analyses_created_at", "created_at"),
+        # analyses for a given resume, newest first
+        Index("ix_analyses_resume_id_created_at", "resume_id", "created_at"),
     )
-    status: Mapped[AnalysisStatus]
+
+    resume_id: Mapped[UUID] = mapped_column(
+        GUID(), ForeignKey("resumes.id"), index=True
+    )
+    user_id: Mapped[UUID] = mapped_column(GUID(), ForeignKey("users.id"), index=True)
+    dbn_standard_id: Mapped[UUID | None] = mapped_column(
+        GUID(), ForeignKey("dbn_standards.id"), nullable=True, index=True
+    )
+    status: Mapped[AnalysisStatus] = mapped_column(index=True)
     overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     ats_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     # New dimension columns (mirror of scores_json.dimensions.*.score).
