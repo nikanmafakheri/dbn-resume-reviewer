@@ -9,10 +9,9 @@ kept so historical rows remain readable.
 
 from uuid import UUID
 
-from sqlalchemy import JSON, Float, ForeignKey, Index, Integer, Text
+from sqlalchemy import JSON, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.constants import AnalysisStatus
 from app.domain.models.base import GUID, Base, TimestampMixin, UUIDMixin
 
 
@@ -32,7 +31,9 @@ class Analysis(UUIDMixin, TimestampMixin, Base):
     dbn_standard_id: Mapped[UUID | None] = mapped_column(
         GUID(), ForeignKey("dbn_standards.id"), nullable=True, index=True
     )
-    status: Mapped[AnalysisStatus] = mapped_column(index=True)
+    # Stored as VARCHAR (see migration 0002); keep String so SQLAlchemy doesn't
+    # create a native Postgres ENUM type the migration never made.
+    status: Mapped[str] = mapped_column(String(50), index=True)
     overall_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     ats_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     # New dimension columns (mirror of scores_json.dimensions.*.score).

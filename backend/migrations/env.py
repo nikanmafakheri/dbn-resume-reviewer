@@ -28,9 +28,21 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def _migration_url() -> str:
+    """Resolve the migration target URL.
+
+    The app's settings read DATABASE_URL (env/.env), which composes/CI override
+    to Postgres. Prefer that; fall back to the alembic.ini default (SQLite) so a
+    bare `alembic upgrade head` keeps working in local dev.
+    """
+    from app.core.config import settings
+
+    return str(settings.DATABASE_URL)
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode (emit SQL without connecting)."""
-    url = config.get_main_option("sqlalchemy.url")
+    url = _migration_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -51,6 +63,9 @@ def do_run_migrations(connection: Connection) -> None:
 async def run_async_migrations() -> None:
     """Create an async engine and run migrations online."""
     configuration = config.get_section(config.config_ini_section, {})
+    # Point at the resolved URL (settings DATABASE_URL, else alembic.ini), so
+    # online migrations honor compose/CI Postgres overrides.
+    configuration["sqlalchemy.url"] = _migration_url()
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",

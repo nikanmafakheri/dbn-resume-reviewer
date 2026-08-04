@@ -1,0 +1,11 @@
+# Build context excludes — keep image lean and avoid leaking secrets/state.
+.env
+*.db
+*.db-*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+media/

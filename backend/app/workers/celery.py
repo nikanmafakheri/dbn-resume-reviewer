@@ -18,10 +18,14 @@ celery_app.conf.update(
     task_hard_time_limit=330,
     task_acks_late=True,
     worker_concurrency=4,
+    # Import task modules explicitly at worker startup. autodiscover_tasks on
+    # the package does not recurse into submodules, so without `include` the
+    # worker boots with zero registered tasks.
+    include=[
+        "app.workers.analysis",
+        "app.workers.cleanup",
+    ],
 )
-
-# Auto-discover tasks in the workers package
-celery_app.autodiscover_tasks(["app.workers"])
 
 # Recurring housekeeping: sweep stale uploads hourly (only meaningful when
 # celery-beat is running, which docker-compose starts).

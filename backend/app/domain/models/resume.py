@@ -5,7 +5,6 @@ from uuid import UUID
 from sqlalchemy import JSON, BigInteger, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.constants import ResumeStatus
 from app.domain.models.base import GUID, Base, TimestampMixin, UUIDMixin
 
 
@@ -24,7 +23,9 @@ class Resume(UUIDMixin, TimestampMixin, Base):
     file_path: Mapped[str] = mapped_column(String(512))
     file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     mime_type: Mapped[str | None] = mapped_column(String(100))
-    status: Mapped[ResumeStatus] = mapped_column(index=True)
+    # Stored as VARCHAR (see migration 0001); keep String so SQLAlchemy doesn't
+    # create a native Postgres ENUM type the migration never made.
+    status: Mapped[str] = mapped_column(String(50), index=True)
     text_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     metadata_: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
 

@@ -3,9 +3,9 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.types import TypeDecorator
+from sqlalchemy.types import CHAR, TypeDecorator, Uuid
 
 
 class Base(DeclarativeBase):
@@ -13,17 +13,29 @@ class Base(DeclarativeBase):
 
 
 class GUID(TypeDecorator):
-    """GUID type that uses CHAR(32) on SQLite and native UUID on PostgreSQL."""
+    """GUID type: native UUID on PostgreSQL, CHAR(32) on SQLite.
 
-    impl = String(32)
+    Migrations create native ``sa.Uuid()`` columns on both backends, so the
+    decorator must compile to a type asyncpg can bind as a UUID — not a
+    String(32) with a raw ``uuid.UUID`` object (asyncpg rejects that). On
+    SQLite we store the 32-char hex form for the GUID() column type used in
+    ``users`` seeding lookups.
+    """
+
+    impl = Uuid
     cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(Uuid())
+        return dialect.type_descriptor(CHAR(32))
 
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        if dialect.name == "postgresql":
-            return value
-        return value.hex if isinstance(value, uuid.UUID) else value
+        if isinstance(value, uuid.UUID):
+            return value.hex if dialect.name != "postgresql" else value
+        return value
 
     def process_result_value(self, value, dialect):
         if value is None:

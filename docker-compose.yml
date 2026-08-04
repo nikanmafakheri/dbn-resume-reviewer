@@ -5,29 +5,57 @@ services:
     ports:
       - "8000:8000"
     env_file: ./backend/.env
+    environment:
+      # Inside the compose network, Postgres is reachable at hostname `db`
+      # and Redis at `redis` — override the localhost defaults from .env.
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/dbn_resume
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      # Prod path: migrations own the schema (Dockerfile runs `alembic upgrade
+      # head` when DEBUG != "true"); DEBUG=true would let create_all bootstrap.
+      DEBUG: "false"
+      # Template is mounted read-only at /app/templates (see volumes below).
+      TEMPLATE_PPTX_PATH: /app/templates/Black and White Minimalist Professional Resume A4.pptx
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./backend/media:/app/media
+      # Template lives outside the backend build context; mount it read-only so
+      # the /template/download endpoint resolves TEMPLATE_PPTX_PATH.
+      - ./dbn-standard-resume-template:/app/templates:ro
 
   celery-worker:
     build: ./backend
     command: celery -A app.workers.celery worker --loglevel=info
     env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/dbn_resume
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
       - api
       - redis
+    volumes:
+      - ./backend/media:/app/media
 
   celery-beat:
     build: ./backend
     command: celery -A app.workers.celery beat --loglevel=info
     env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/dbn_resume
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
       - api
       - redis
+      - celery-worker
 
   db:
     image: postgres:16-alpine
@@ -51,6 +79,11 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   pgdata:

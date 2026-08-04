@@ -91,6 +91,11 @@ class Database:
                     is_active=True,
                 )
                 session.add(anonymous)
+                # Flush now so the anonymous user row is committed before the
+                # DBNStandard below references it via created_by (a plain FK
+                # column, not an ORM relationship, so SQLAlchemy won't infer
+                # the dependency ordering itself).
+                await session.flush()
 
             # Check if default standard already exists
             result = await session.execute(
