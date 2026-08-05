@@ -19,7 +19,7 @@ def _safe_storage_name(original_filename: str) -> str:
     path-traversal / overwrite attacks via crafted filenames.
     """
     suffix = Path(original_filename or "").suffix.lower()
-    if suffix not in (".pdf", ".docx"):
+    if suffix != ".pdf":
         suffix = ".pdf"
     return f"{uuid.uuid4().hex}{suffix}"
 
@@ -52,5 +52,4 @@ def _guess_mime(storage_name: str) -> str:
     suffix = Path(storage_name).suffix.lower()
     return {
         ".pdf": "application/pdf",
-        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     }.get(suffix, "application/octet-stream")

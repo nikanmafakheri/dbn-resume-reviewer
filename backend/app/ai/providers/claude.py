@@ -5,7 +5,11 @@ import logging
 
 import httpx
 
-from app.ai.providers.base import BaseLLMProvider
+from app.ai.providers.base import (
+    BaseLLMProvider,
+    ProviderRateLimitError,
+    is_rate_limit_error,
+)
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -43,7 +47,10 @@ class ClaudeProvider(BaseLLMProvider):
                 content = result["content"][0]["text"]
         except httpx.HTTPStatusError as exc:
             logger.error("Claude request failed (%s): %.200s", resp.status_code, resp.text)
-            raise RuntimeError(f"Claude request failed ({resp.status_code})") from exc
+            message = f"Claude request failed ({resp.status_code})"
+            if resp.status_code == 429 or is_rate_limit_error(exc):
+                raise ProviderRateLimitError(message) from exc
+            raise RuntimeError(message) from exc
         except (httpx.HTTPError, KeyError, IndexError) as exc:
             logger.exception("Claude request failed")
             raise RuntimeError(f"Claude request failed: {exc}") from exc

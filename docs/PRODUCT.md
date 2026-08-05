@@ -7,7 +7,7 @@ An AI-powered SaaS platform that helps job seekers optimize their resumes throug
 ## User Roles
 
 ### Candidate
-- Upload resumes (PDF/DOC/DOCX)
+- Upload resumes (PDF)
 - Trigger AI-powered analysis
 - View four-dimension scores (Overall, ATS, Grammar, Recruiter)
 - Read AI-generated summary and feedback

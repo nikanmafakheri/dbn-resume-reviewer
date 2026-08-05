@@ -137,6 +137,48 @@ async def test_scoring_failure_surfaces_error(client, db_session, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_rate_limit_error_sets_error_code(client, db_session, monkeypatch):
+    """A provider quota/429 must be classified as error_code='rate_limited' so
+    the frontend can show a friendly 'please wait' instead of a raw error."""
+    from app.ai.providers.base import ProviderRateLimitError
+
+    resume_id = await _seed_resume(db_session)
+    monkeypatch.setattr(
+        "app.dependencies.create_scorer",
+        lambda: FakeScorer(exc=ProviderRateLimitError("Gemini request failed: 429 quota")),
+    )
+
+    resp = await client.post(f"/api/v1/resumes/{resume_id}/analyze")
+    assert resp.status_code == 202
+
+    body = resp.json()
+    assert body["status"] == AnalysisStatus.FAILED
+    assert body["error_code"] == "rate_limited"
+    assert "429" in body["error_message"]
+
+
+@pytest.mark.asyncio
+async def test_timeout_error_sets_error_code(client, db_session, monkeypatch):
+    """A provider timeout must be classified as error_code='timed_out' so the
+    frontend can show the friendly wait-and-retry card (same as quota)."""
+    from app.ai.providers.base import ProviderTimeoutError
+
+    resume_id = await _seed_resume(db_session)
+    monkeypatch.setattr(
+        "app.dependencies.create_scorer",
+        lambda: FakeScorer(exc=ProviderTimeoutError("LLM request timed out after 90 seconds")),
+    )
+
+    resp = await client.post(f"/api/v1/resumes/{resume_id}/analyze")
+    assert resp.status_code == 202
+
+    body = resp.json()
+    assert body["status"] == AnalysisStatus.FAILED
+    assert body["error_code"] == "timed_out"
+    assert "timed out" in body["error_message"]
+
+
+@pytest.mark.asyncio
 async def test_invalid_uuid_returns_422_not_500(client):
     """Path params are validated as UUID — malformed input gets a 422."""
     resp = await client.post("/api/v1/resumes/not-a-uuid/analyze")

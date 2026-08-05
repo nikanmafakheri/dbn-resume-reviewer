@@ -98,6 +98,7 @@ class AnalysisResponse(BaseModel):
     feedback: dict = {}
     scores_json: dict | None = None
     error_message: str | None
+    error_code: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

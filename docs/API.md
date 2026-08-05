@@ -9,7 +9,7 @@ The app is **anonymous** — no authentication is required (or present) on any e
 ### POST /resumes/upload
 Upload a resume file. Accepts `multipart/form-data` with a `file` field.
 
-- Allowed types: `.pdf`, `.docx` (rejected otherwise → 400)
+- Allowed types: `.pdf` (rejected otherwise → 400)
 - Max size: **10 MB** → 400 beyond
 - PDF text is extracted at upload (failure to extract is logged, not fatal)
 - Returns the created `ResumeResponse`

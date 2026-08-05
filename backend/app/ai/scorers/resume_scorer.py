@@ -15,11 +15,13 @@ Guarantees of this pipeline:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 
 from app.ai.parsers.score_parser import ScoreParseError, parse_score_response
-from app.ai.providers.base import BaseLLMProvider
+from app.ai.providers.base import BaseLLMProvider, ProviderTimeoutError
+from app.core.config import settings
 from app.core.scoring import DIMENSION_WEIGHTS, DIMENSIONS, weighted_overall
 from app.schemas.analysis import ScoreResult
 
@@ -48,7 +50,22 @@ class ResumeScorer:
         self.provider = provider
 
     async def _generate(self, prompt: str) -> dict:
-        return await self.provider.generate(prompt, schema=ScoreResult)
+        """Send one prompt to the provider, bounded by the LLM request timeout.
+
+        Each call gets a fresh time budget (the scorer may retry with corrective
+        feedback, so the timeout applies per-attempt, not across the whole
+        ``score()``). A slow/hung provider raises ``ProviderTimeoutError`` —
+        a transient capacity pause the frontend surfaces with a friendly
+        "wait and retry" card instead of a red failure.
+        """
+        timeout = settings.LLM_REQUEST_TIMEOUT_SECONDS
+        try:
+            async with asyncio.timeout(timeout):
+                return await self.provider.generate(prompt, schema=ScoreResult)
+        except TimeoutError as exc:
+            raise ProviderTimeoutError(
+                f"LLM request timed out after {timeout:g} seconds"
+            ) from exc
 
     async def score(self, resume_text: str) -> ScoreResult:
         """Run the evaluation pipeline: prompt → validate → retry on failure.

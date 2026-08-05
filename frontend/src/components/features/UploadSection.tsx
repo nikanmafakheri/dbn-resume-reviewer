@@ -10,7 +10,7 @@ interface UploadSectionProps {
   error?: string | null;
 }
 
-const ALLOWED = ['.pdf', '.docx'];
+const ALLOWED = ['.pdf'];
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export function UploadSection({ onFileSelected, isUploading, error }: UploadSectionProps) {
@@ -45,6 +45,13 @@ export function UploadSection({ onFileSelected, isUploading, error }: UploadSect
   };
 
   const displayError = error || validationError;
+  // `error` may be an i18n key (e.g. quota.uploadBlocked) passed from App;
+  // resolve it through t() so messages stay localized. Real Error.message
+  // strings are not valid keys and pass through unchanged.
+  const renderedError =
+    displayError && typeof displayError === 'string' && displayError.includes('.')
+      ? t(displayError as Parameters<typeof t>[0])
+      : displayError;
 
   const dropzoneClasses = [
     'group relative flex w-full max-w-xl cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed p-10 text-center outline-none transition-all duration-200 sm:p-14',
@@ -126,10 +133,10 @@ export function UploadSection({ onFileSelected, isUploading, error }: UploadSect
       </p>
 
       {/* Validation / upload error */}
-      {displayError && (
+      {renderedError && (
         <p className="anim-fade-in mt-4 flex items-center gap-2 text-sm font-medium text-[var(--danger)]" role="alert">
           <Icon name="close" size={14} />
-          {displayError}
+          {renderedError}
         </p>
       )}
 

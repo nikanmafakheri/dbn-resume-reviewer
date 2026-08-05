@@ -6,7 +6,11 @@ import logging
 import httpx
 from pydantic import BaseModel
 
-from app.ai.providers.base import BaseLLMProvider
+from app.ai.providers.base import (
+    BaseLLMProvider,
+    ProviderRateLimitError,
+    is_rate_limit_error,
+)
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -44,7 +48,10 @@ class OpenAIProvider(BaseLLMProvider):
                 content = result["choices"][0]["message"]["content"]
         except httpx.HTTPStatusError as exc:
             logger.error("OpenAI request failed (%s): %.200s", resp.status_code, resp.text)
-            raise RuntimeError(f"OpenAI request failed ({resp.status_code})") from exc
+            message = f"OpenAI request failed ({resp.status_code})"
+            if resp.status_code == 429 or is_rate_limit_error(exc):
+                raise ProviderRateLimitError(message) from exc
+            raise RuntimeError(message) from exc
         except (httpx.HTTPError, KeyError, IndexError) as exc:
             logger.exception("OpenAI request failed")
             raise RuntimeError(f"OpenAI request failed: {exc}") from exc

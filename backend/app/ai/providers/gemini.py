@@ -3,7 +3,7 @@
 import json
 import logging
 
-from app.ai.providers.base import BaseLLMProvider
+from app.ai.providers.base import BaseLLMProvider, ProviderRateLimitError, is_rate_limit_error
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,10 @@ class GeminiProvider(BaseLLMProvider):
             )
         except Exception as exc:
             logger.exception("Gemini request failed")
-            raise RuntimeError(f"Gemini request failed: {exc}") from exc
+            message = f"Gemini request failed: {exc}"
+            if is_rate_limit_error(exc):
+                raise ProviderRateLimitError(message) from exc
+            raise RuntimeError(message) from exc
 
         text = (response.text or "").strip()
         if not text:

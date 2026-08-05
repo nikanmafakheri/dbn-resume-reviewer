@@ -33,7 +33,7 @@
 
 ## Data Flow
 
-1. User uploads a resume (PDF/DOC/DOCX) → stored in `media/resumes/`
+1. User uploads a resume (PDF) → stored in `media/resumes/`
 2. PDF text extracted via PyMuPDF → stored as `text_content`
 3. Analysis triggered → Celery task dispatched with 202 response
 4. Celery worker loads resume text, calls configured AI provider

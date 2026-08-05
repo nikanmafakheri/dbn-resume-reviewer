@@ -1,6 +1,6 @@
 # DBN Resume Reviewer
 
-AI-powered resume reviewer — **completely free**, single-page web app. Upload your resume (PDF/DOCX), get an AI evaluation with multiple scores (ATS, skills, experience, formatting, content + overall **DBN score**), a Persian analysis paragraph, and actionable improvement feedback. Scroll down for a downloadable **DBN Standard resume template** (.pptx).
+AI-powered resume reviewer — **completely free**, single-page web app. Upload your resume (PDF), get an AI evaluation with multiple scores (ATS, skills, experience, formatting, content + overall **DBN score**), a Persian analysis paragraph, and actionable improvement feedback. Scroll down for a downloadable **DBN Standard resume template** (.pptx).
 
 ## Tech Stack
 
@@ -32,7 +32,7 @@ npm run dev
 
 ```bash
 cd backend
-uv run pytest          # 39 unit/integration tests
+uv run pytest          # unit/integration/e2e tests
 uv run ruff check .    # lint
 
 cd frontend

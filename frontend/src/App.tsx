@@ -7,10 +7,11 @@ import { UploadSection } from './components/features/UploadSection';
 import { AnalysisResults } from './components/features/AnalysisResults';
 import { StandardSection } from './components/features/StandardSection';
 import { HowItWorks } from './components/features/HowItWorks';
-import { API_BASE_URL } from './lib/api';
+import { API_BASE_URL, isRateLimitError } from './lib/api';
 
 function App() {
   const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [resumeId, setResumeId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -26,16 +27,31 @@ function App() {
         method: 'POST',
         body: formData,
       });
-      if (!uploadRes.ok) throw new Error('Upload failed');
+      if (!uploadRes.ok) {
+        // Surface the friendly quota message for a middleware 429 instead of
+        // the generic "Upload failed" that currently hides the status code.
+        if (isRateLimitError(uploadRes.status)) {
+          setUploadError('quota.uploadBlocked');
+          return;
+        }
+        throw new Error('Upload failed');
+      }
       const resume = await uploadRes.json();
 
       // 2. Trigger analysis
       const analyzeRes = await fetch(`${API_BASE_URL}/resumes/${resume.id}/analyze`, {
         method: 'POST',
       });
-      if (!analyzeRes.ok) throw new Error('Analysis trigger failed');
+      if (!analyzeRes.ok) {
+        if (isRateLimitError(analyzeRes.status)) {
+          setUploadError('quota.uploadBlocked');
+          return;
+        }
+        throw new Error('Analysis trigger failed');
+      }
       const analysis = await analyzeRes.json();
 
+      setResumeId(resume.id);
       setAnalysisId(analysis.id);
       // Scroll results into view once analysis starts
       requestAnimationFrame(() => {
@@ -48,12 +64,42 @@ function App() {
     }
   };
 
-  const handleRetry = () => {
-    setAnalysisId(null);
+  /**
+   * Retry after a quota pause: re-trigger scoring on the *same* resume so the
+   * user never re-uploads. The backend creates a fresh Analysis row each
+   * POST /resumes/{id}/analyze; we swap in its id and polling resumes.
+   */
+  const handleRetry = async () => {
+    if (!resumeId) {
+      setAnalysisId(null);
+      return;
+    }
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const analyzeRes = await fetch(`${API_BASE_URL}/resumes/${resumeId}/analyze`, {
+        method: 'POST',
+      });
+      if (!analyzeRes.ok) {
+        if (isRateLimitError(analyzeRes.status)) {
+          setUploadError('quota.uploadBlocked');
+        } else {
+          throw new Error('Analysis trigger failed');
+        }
+        return;
+      }
+      const analysis = await analyzeRes.json();
+      setAnalysisId(analysis.id);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleReset = () => {
     setAnalysisId(null);
+    setResumeId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

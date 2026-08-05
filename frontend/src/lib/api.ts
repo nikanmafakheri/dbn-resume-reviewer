@@ -17,6 +17,24 @@ export interface ApiError {
 const DEFAULT_TIMEOUT_MS = 20_000;
 
 /**
+ * True when a failure is a transient capacity pause rather than a bug.
+ * Matches HTTP 429, the API's `Too many requests`, the backend's structured
+ * `error_code` for quota (`rate_limited`) and timeout (`timed_out`), plus
+ * provider strings that carry "quota"/"rate limit"/"exceeded"/timeout terms.
+ *
+ * A timed-out provider request is surfaced the same way as a quota pause:
+ * the friendly amber "please wait & retry" card with auto-retry.
+ */
+export function isRateLimitError(
+  status?: number | null,
+  message?: string | null,
+): boolean {
+  if (status === 429) return true;
+  const text = message ?? '';
+  return /rate.limit|quota|exceeded|too many requests|429|timed out|timeout|deadline|cancelled/i.test(text);
+}
+
+/**
  * Typed GET helper with timeout + sane error mapping.
  * Use for all read paths so failures surface consistently.
  */

@@ -51,6 +51,10 @@ class Analysis(UUIDMixin, TimestampMixin, Base):
     # Full nested evaluation result (dimensions, confidence, lists, summary).
     scores_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Structured failure classifier (e.g. "rate_limited") so the frontend can
+    # show a friendly "please wait" instead of parsing error_message text.
+    # Null/absent means a genuine error, not a retryable capacity pause.
+    error_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     processing_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     resume = relationship("Resume", back_populates="analyses")

@@ -63,6 +63,13 @@ class Settings(BaseSettings):
 
     # ── LLM Provider ─────────────────────────────────
     LLM_PROVIDER: Literal["gemini", "openai", "claude", "openrouter"] = "gemini"
+
+    # Per-provider ceiling on a single LLM request (seconds). Applied around each
+    # `generate()` call in the scorer, so a slow/hung provider fails gracefully
+    # (classified `timed_out` → friendly wait-and-retry) instead of leaving the
+    # frontend polling a stuck `processing` analysis forever. Sits above normal
+    # latency (Gemini flash is ~1-5s) but well below a user's patience.
+    LLM_REQUEST_TIMEOUT_SECONDS: float = 90.0
     GEMINI_MODEL: str = "gemini-2.0-flash"
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None

@@ -4,7 +4,7 @@ import { ScoreGauge } from './ScoreGauge';
 import { Button } from '../ui/Button';
 import { Section } from '../ui/Section';
 import { getBandKey } from '../ui/ScoreRing';
-import { API_BASE_URL } from '../../lib/api';
+import { API_BASE_URL, isRateLimitError } from '../../lib/api';
 import type { ScoreResult } from '../../types/analysis';
 
 /** Renders a titled list of strengths / weaknesses / missing skills / recommendations. */
@@ -57,6 +57,7 @@ interface ScoreData {
   scores_json: ScoreResult | null;
   status: string;
   error_message: string | null;
+  error_code: string | null;
 }
 
 interface AnalysisResultsProps {
@@ -73,8 +74,22 @@ export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResult
   const [data, setData] = useState<ScoreData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
   const intervalRef = useRef<number | undefined>(undefined);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Auto-retry after a quota countdown (e.g. 30s) so the user isn't expected
+  // to stare at the page — we re-trigger the same resume once capacity frees.
+  useEffect(() => {
+    if (retryCountdown === null) return;
+    if (retryCountdown <= 0) {
+      setRetryCountdown(null);
+      onRetry();
+      return;
+    }
+    const id = window.setTimeout(() => setRetryCountdown((c) => (c === null ? null : c - 1)), 1000);
+    return () => window.clearTimeout(id);
+  }, [retryCountdown, onRetry]);
 
   useEffect(() => {
     if (!analysisId) return;
@@ -97,6 +112,15 @@ export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResult
         setError(null);
         if (json.status === 'completed' || json.status === 'failed') {
           clearInterval(intervalRef.current);
+        }
+        // A rate-limited failure is a capacity pause, not a bug — offer a
+        // friendly wait + auto-retry. Restart the countdown if still pending.
+        const isQuota =
+          json.status === 'failed' &&
+          (json.error_code === 'rate_limited' ||
+            isRateLimitError(null, json.error_message));
+        if (isQuota) {
+          setRetryCountdown((c) => (c === null || c <= 0 ? 30 : c));
         }
       } catch (err) {
         // Ignore abort noise — only surface genuine failures.
@@ -166,6 +190,35 @@ export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResult
           </div>
           <Button variant="ghost" size="sm" onClick={onReset}>
             {t('analysis.cancel')}
+          </Button>
+        </div>
+      </Section>
+    );
+  }
+
+  // Quota / capacity pause — friendly "please wait" with an auto-retry
+  // countdown. Not a bug; the resume is preserved, no re-upload needed.
+  const isQuotaPause =
+    data?.status === 'failed' &&
+    (data.error_code === 'rate_limited' || isRateLimitError(null, data.error_message));
+
+  if (isQuotaPause) {
+    return (
+      <Section size="sm" className="max-w-md text-center">
+        <div className="card-flat flex flex-col items-center gap-4 p-8">
+          <div className="h-9 w-9 animate-spin rounded-full border-4 border-[var(--warning)] border-t-transparent" />
+          <div>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">{t('quota.title')}</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{t('quota.body')}</p>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">{t('quota.keepResume')}</p>
+            {retryCountdown !== null && (
+              <p className="mt-2 text-xs font-medium text-[var(--warning)]">
+                {t('quota.waiting').replace('{seconds}', String(retryCountdown))}
+              </p>
+            )}
+          </div>
+          <Button onClick={onRetry} variant="secondary" size="sm">
+            {t('quota.retryNow')}
           </Button>
         </div>
       </Section>

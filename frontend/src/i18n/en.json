@@ -8,14 +8,14 @@
     "headline": "Land your dream job with a",
     "headlineAccent": "standout resume",
     "title": "Upload Your Resume",
-    "description": "Drop your resume here (PDF, DOC, DOCX) or click to browse. Get an AI-powered analysis instantly.",
+    "description": "Drop your resume here (PDF) or click to browse. Get an AI-powered analysis instantly.",
     "dragText": "Drop your resume here",
     "clickText": "or click to browse",
     "button": "Upload & Analyze",
     "uploading": "Uploading...",
     "trust": "Free · No signup · Your resume is analyzed instantly",
     "success": "Resume uploaded successfully! Analyzing...",
-    "invalidType": "Unsupported file type. Please upload a PDF, DOC, or DOCX.",
+    "invalidType": "Unsupported file type. Please upload a PDF.",
     "tooLarge": "File is too large. Maximum size is 10 MB.",
     "clear": "Remove file"
   },
@@ -52,6 +52,14 @@
     "noMissingSkills": "No missing skills identified.",
     "noRecommendations": "No recommendations available.",
     "persianAnalysis": "Professional Analysis (فارسی)"
+  },
+  "quota": {
+    "title": "We're at capacity right now",
+    "body": "The free AI tier is maxed out — lots of people are analyzing at once. Please wait a minute and try again.",
+    "waiting": "Retrying in {seconds}s",
+    "retryNow": "Try Again Now",
+    "keepResume": "Your resume is saved — no need to re-upload.",
+    "uploadBlocked": "We're busy — too many uploads right now. Please wait a moment and try again."
   },
   "how": {
     "eyebrow": "How it works",

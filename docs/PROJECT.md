@@ -19,7 +19,7 @@ resume-reviewer/
 
 ## Key Features
 
-- Resume upload (PDF, DOCX) with size/type validation
+- Resume upload (PDF) with size/type validation
 - AI scoring across five dimensions: ATS, Skills, Experience, Formatting, Content
   - Deterministic overall score (weighted mean, computed server-side)
   - Per-dimension justifications + strengths / weaknesses / missing skills / recommendations

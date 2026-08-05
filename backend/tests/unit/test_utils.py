@@ -8,7 +8,11 @@ from app.utils.validators import validate_password
 class TestFileUtils:
     def test_allowed_extensions(self):
         assert is_allowed_file("resume.pdf") is True
-        assert is_allowed_file("resume.docx") is True
+
+    def test_docx_not_allowed(self):
+        # DOCX has no text-extraction path, so it would upload with empty text
+        # and fail analysis — reject it at the door (PDF-only uploads).
+        assert is_allowed_file("resume.docx") is False
 
     def test_disallowed_extensions(self):
         assert is_allowed_file("resume.txt") is False

@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
+from app.ai.providers.base import ProviderRateLimitError, is_timeout_error
 from app.core.constants import AnalysisStatus
 from app.dependencies import get_analysis_service, get_resume_service
 from app.schemas.analysis import AnalysisResponse
@@ -24,12 +25,12 @@ async def upload_resume(
     file: UploadFile = File(...),
     resume_service: ResumeService = Depends(get_resume_service),
 ):
-    """Upload a resume file (PDF, DOC, DOCX)."""
+    """Upload a resume file (PDF)."""
     filename = file.filename or "untitled"
     if not is_allowed_file(filename):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File type not allowed. Allowed: .pdf, .docx",
+            detail="File type not allowed. Allowed: .pdf",
         )
 
     content = await file.read()
@@ -109,6 +110,10 @@ async def analyze_resume(
             logger.exception("Analysis %s failed for resume %s", analysis.id, resume_id)
             analysis.status = AnalysisStatus.FAILED
             analysis.error_message = str(exc)
+            if isinstance(exc, ProviderRateLimitError):
+                analysis.error_code = "rate_limited"
+            elif is_timeout_error(exc):
+                analysis.error_code = "timed_out"
     else:
         analysis.status = AnalysisStatus.FAILED
         analysis.error_message = "No extractable text in resume (is it a scanned PDF?)"

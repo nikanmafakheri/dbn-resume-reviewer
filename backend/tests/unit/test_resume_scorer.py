@@ -1,10 +1,14 @@
 """Unit tests for the ResumeScorer retry + deterministic-formula pipeline."""
 
 
+import asyncio
+
 import pytest
 
 from app.ai.parsers.score_parser import ScoreParseError
+from app.ai.providers.base import ProviderTimeoutError
 from app.ai.scorers.resume_scorer import MAX_RETRIES, ResumeScorer
+from app.core.config import settings
 
 
 def _valid_payload() -> dict:
@@ -69,3 +73,28 @@ class TestResumeScorer:
         provider = _FakeProvider([{"raw": "not json"}])
         with pytest.raises(ScoreParseError):
             await ResumeScorer(provider).score("...resume...")
+
+    async def test_slow_provider_raises_timeout_and_does_not_retry(self, monkeypatch):
+        """A provider that exceeds the request budget surfaces ProviderTimeoutError.
+
+        The timeout is *not* a parse error, so the scorer must not burn its
+        corrective-feedback retries on it — a single attempt is made.
+        """
+
+        class _SlowProvider:
+            prompts = 0
+
+            async def generate(self, prompt: str, schema=None):
+                self.prompts += 1
+                await asyncio.sleep(10)
+                return {"raw": "never reached"}
+
+        monkeypatch.setattr(settings, "LLM_REQUEST_TIMEOUT_SECONDS", 0.05)
+        provider = _SlowProvider()
+        scorer = ResumeScorer(provider)
+
+        with pytest.raises(ProviderTimeoutError) as exc_info:
+            await scorer.score("...resume...")
+
+        assert "timed out" in str(exc_info.value)
+        assert provider.prompts == 1

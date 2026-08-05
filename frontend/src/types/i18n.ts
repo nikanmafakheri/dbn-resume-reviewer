@@ -49,6 +49,12 @@ export type TranslationKey =
   'how.title' |
   'nav.switchLang' |
   'nav.title' |
+  'quota.body' |
+  'quota.keepResume' |
+  'quota.retryNow' |
+  'quota.title' |
+  'quota.uploadBlocked' |
+  'quota.waiting' |
   'standard.criteria' |
   'standard.description' |
   'standard.download' |

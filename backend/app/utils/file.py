@@ -4,11 +4,12 @@ from pathlib import Path
 
 import magic
 
-ALLOWED_EXTENSIONS = {".pdf", ".docx"}
-ALLOWED_MIME_TYPES = {
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-}
+# PDF only: the pipeline extracts text from PDFs (see utils/pdf.py). DOCX was
+# previously allowed here but no DOCX text extraction exists, so a .docx upload
+# would silently land with empty text and fail analysis. We reject it at the
+# door rather than accept files guaranteed to fail.
+ALLOWED_EXTENSIONS = {".pdf"}
+ALLOWED_MIME_TYPES = {"application/pdf"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_FILE_SIZE_MB = 10
 
@@ -40,7 +41,7 @@ def validate_file_content(content: bytes, filename: str) -> tuple[bool, str | No
     mime_type = magic.from_buffer(content, mime=True)
 
     if mime_type not in ALLOWED_MIME_TYPES:
-        return False, f"Invalid file type: {mime_type}. Allowed: PDF, DOCX"
+        return False, f"Invalid file type: {mime_type}. Allowed: PDF"
 
     # Additional PDF-specific validation
     if mime_type == "application/pdf":

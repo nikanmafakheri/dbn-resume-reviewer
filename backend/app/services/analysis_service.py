@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from app.ai.providers.base import ProviderRateLimitError
 from app.ai.scorers.resume_scorer import ResumeScorer
 from app.core.constants import AnalysisStatus
 from app.core.database import Database
@@ -37,6 +38,8 @@ class AnalysisService:
         except Exception as exc:
             analysis.status = AnalysisStatus.FAILED
             analysis.error_message = str(exc)
+            if isinstance(exc, ProviderRateLimitError):
+                analysis.error_code = "rate_limited"
 
     @staticmethod
     def _apply_result(analysis: Analysis, result) -> None:
