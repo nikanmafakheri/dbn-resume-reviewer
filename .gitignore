@@ -53,6 +53,9 @@ CLAUDE.md
 # Graphify generated knowledge-graph artifacts
 graphify-out/
 
+# Static images / assets (not needed in repo)
+images/
+
 # Misc
 .cache/
 coverage/
