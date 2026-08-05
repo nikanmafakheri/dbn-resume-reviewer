@@ -44,6 +44,9 @@ frontend/
 # Docs (ignored per request)
 docs/
 
+# Graphify generated knowledge-graph artifacts
+graphify-out/
+
 # Misc
 .cache/
 coverage/
