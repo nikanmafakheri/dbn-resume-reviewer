@@ -50,19 +50,31 @@ class Database:
         """
 
         connect_args: dict = {}
-        if "sslmode" in url:
-            from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+        from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
-            parts = urlsplit(url)
-            params = parse_qs(parts.query)
-            ssl_mode = params.pop("sslmode", ["require"])[0]
+        # asyncpg accepts ``ssl`` as a connect_arg but not ``sslmode``/``channel_binding``
+        # as URL params (Neon appends both). ``sslmode`` maps to ``ssl``; ``channel_binding``
+        # has no asyncpg equivalent, so drop it (TLS is already required via sslmode).
+        PARAM_TO_CONNECT_ARG = {"sslmode": "ssl"}
+        DROP_PARAMS = {"channel_binding"}
+        parts = urlsplit(url)
+        params = parse_qs(parts.query)
+        needs_rebuild = False
+        for name, arg in PARAM_TO_CONNECT_ARG.items():
+            if name in params:
+                connect_args[arg] = params.pop(name, ["require"])[0]
+                needs_rebuild = True
+        for name in DROP_PARAMS:
+            if name in params:
+                params.pop(name, None)
+                needs_rebuild = True
+        if needs_rebuild:
             query = urlencode(
                 {k: v[0] for k, v in params.items()}, doseq=True
             )
             url = urlunsplit(
                 (parts.scheme, parts.netloc, parts.path, query, parts.fragment)
             )
-            connect_args["ssl"] = ssl_mode
 
         return create_async_engine(
             str(url),
