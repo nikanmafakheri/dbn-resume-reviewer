@@ -1,0 +1,102 @@
+{
+  "nav": {
+    "title": "DBN Resume Reviewer",
+    "switchLang": "Switch language"
+  },
+  "upload": {
+    "eyebrow": "AI-Powered Resume Review",
+    "headline": "Land your dream job with a",
+    "headlineAccent": "standout resume",
+    "title": "Upload Your Resume",
+    "description": "Drop your resume here (PDF) or click to browse. Get an AI-powered analysis instantly.",
+    "dragText": "Drop your resume here",
+    "clickText": "or click to browse",
+    "button": "Upload & Analyze",
+    "uploading": "Uploading...",
+    "trust": "Free · No signup · Your resume is analyzed instantly",
+    "success": "Resume uploaded successfully! Analyzing...",
+    "invalidType": "Unsupported file type. Please upload a PDF.",
+    "tooLarge": "File is too large. Maximum size is 10 MB.",
+    "clear": "Remove file"
+  },
+  "analysis": {
+    "pending": "Waiting to start...",
+    "processing": "AI is analyzing your resume...",
+    "completed": "Analysis Complete",
+    "subtitle": "Here's how your resume compares against the DBN standard.",
+    "failed": "Analysis Failed",
+    "retry": "Try Again",
+    "cancel": "Cancel",
+    "analyzeAnother": "Analyze another resume",
+    "errorTitle": "Couldn't load results",
+    "processingHint": "This usually takes a few seconds",
+    "overall": "Overall",
+    "ats": "ATS Score",
+    "summary": "Summary",
+    "band": {
+      "low": "Needs work",
+      "mid": "Getting there",
+      "good": "Strong",
+      "great": "Excellent"
+    },
+    "skills": "Skills",
+    "experience": "Experience",
+    "formatting": "Formatting",
+    "content": "Content Quality",
+    "strengths": "Strengths",
+    "weaknesses": "Weaknesses",
+    "missingSkills": "Missing Skills",
+    "recommendations": "Actionable Recommendations",
+    "noStrengths": "No strengths identified.",
+    "noWeaknesses": "No weaknesses identified.",
+    "noMissingSkills": "No missing skills identified.",
+    "noRecommendations": "No recommendations available.",
+    "persianAnalysis": "Professional Analysis (فارسی)"
+  },
+  "quota": {
+    "title": "We're at capacity right now",
+    "body": "The free AI tier is maxed out — lots of people are analyzing at once. Please wait a minute and try again.",
+    "waiting": "Retrying in {seconds}s",
+    "retryNow": "Try Again Now",
+    "keepResume": "Your resume is saved — no need to re-upload.",
+    "uploadBlocked": "We're busy — too many uploads right now. Please wait a moment and try again."
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "title": "From upload to results in seconds",
+    "description": "No signup. No waiting. Just drop your resume and get actionable feedback.",
+    "step1": {
+      "title": "Upload your resume",
+      "description": "Drag and drop a PDF or Word file. It's validated instantly, nothing leaves your browser until you hit analyze."
+    },
+    "step2": {
+      "title": "AI analyzes it",
+      "description": "Our model scores your resume against the DBN standard across ATS, grammar, and recruiter appeal."
+    },
+    "step3": {
+      "title": "Get your score",
+      "description": "See your overall score and clear, prioritized ways to improve — ready to act on."
+    }
+  },
+  "standard": {
+    "eyebrow": "DBN Standard",
+    "title": "DBN Scoring Standard",
+    "description": "Our AI evaluates your resume across four weighted criteria based on the DBN Resume Standard v1.",
+    "criteria": "Criteria",
+    "weight": "Weight",
+    "maxScore": "Max Score",
+    "download": "Download Template",
+    "error": "Could not load the scoring standard."
+  },
+  "footer": {
+    "tagline": "AI-Powered Resume Analysis",
+    "instagram": "@devbynikan",
+    "linkedin": "nikanmafakheri",
+    "github": "nikanmafakheri",
+    "copyright": "All rights reserved."
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  }
+}

@@ -41,7 +41,6 @@ htmlcov/
 
 # Node
 node_modules/
-frontend/
 
 # Docs (ignored per request)
 docs/
