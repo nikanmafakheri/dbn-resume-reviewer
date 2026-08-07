@@ -7,17 +7,23 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY pyproject.toml .
+COPY backend/pyproject.toml .
 RUN pip install --no-cache-dir .
 
-COPY app/ app/
-COPY migrations/ migrations/
+COPY backend/app/ app/
+COPY backend/migrations/ migrations/
 # alembic.ini holds script_location + logging config; `alembic upgrade head`
 # in CMD needs it present (env.py imports app.* so prepend_sys_path=. too).
-COPY alembic.ini .
+COPY backend/alembic.ini .
+
+# The DBN Standard template (.pptx) lives at the repo root and is served by
+# /api/v1/dbn-standards/template/download. It must be inside the image so the
+# endpoint works on Render/any host without a compose-style volume mount.
+COPY dbn-standard-resume-template/ dbn-standard-resume-template/
 
 # Run migrations at startup (unless DEBUG, which lets create_all own the schema).
-# DEBUG is controlled by the DEBUG env var set in compose, not baked into the image.
+# DEBUG is controlled by the DEBUG env var set in compose/Render, not baked into
+# the image.
 EXPOSE 8000
 
 CMD ["/bin/sh", "-c", "if [ \"$DEBUG\" != \"true\" ]; then alembic upgrade head; fi && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]

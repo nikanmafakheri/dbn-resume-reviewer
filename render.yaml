@@ -1,0 +1,60 @@
+# Render Blueprint — deploys the DBN Resume Reviewer to Render's free tier.
+#
+# Two free services:
+#   1. dbn-resume-api  — Docker web service (backend/Dockerfile), Neon Postgres
+#   2. dbn-resume-web  — static React site (frontend/dist)
+#
+# Redis/Celery are intentionally NOT provisioned (Render free has no Redis). The
+# API runs scoring inline and rate-limiting falls back to an in-memory counter, so
+# this is a clean single-service deploy.
+#
+# `sync: false` env vars are set in the Render dashboard — do not commit secrets.
+
+services:
+  # ── Backend API ──────────────────────────────────────────────────────────
+  - type: web
+    name: dbn-resume-api
+    runtime: docker
+    plan: free
+    dockerfilePath: backend/Dockerfile
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: DEBUG
+        value: "false"            # migrations own the schema (Dockerfile runs alembic)
+      - key: DATABASE_URL
+        sync: false               # set to your Neon connection string in the dashboard
+      - key: INFERX_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://dbn-resume-web.onrender.com"]'
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "120"
+      - key: RATE_LIMIT_WINDOW_SECONDS
+        value: "60"
+      # Redis/Celery are unused on this deploy; points are harmless but present
+      # so the existing config objects load without error.
+      - key: REDIS_URL
+        value: "redis://localhost:6379/0"
+
+  # ── Frontend (static) ────────────────────────────────────────────────────
+  - type: web
+    name: dbn-resume-web
+    runtime: static
+    plan: free
+    autoDeploy: true
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /static/*
+        name: Cache-Control
+        value: "public, max-age=31536000, immutable"
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://dbn-resume-api.onrender.com/api/v1
+      - key: CORS_ORIGINS
+        value: '["https://dbn-resume-web.onrender.com"]'

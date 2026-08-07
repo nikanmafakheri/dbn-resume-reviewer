@@ -6,7 +6,9 @@
 # orchestrated service (rate-limit + Celery broker/result backend).
 services:
   api:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     env_file: ./backend/.env
@@ -19,16 +21,14 @@ services:
       # Prod path: migrations own the schema (Dockerfile runs `alembic upgrade
       # head` when DEBUG != "true"); DEBUG=true would let create_all bootstrap.
       DEBUG: "false"
-      # Template is mounted read-only at /app/templates (see volumes below).
-      TEMPLATE_PPTX_PATH: /app/templates/Black and White Minimalist Professional Resume A4.pptx
+      # The DBN template is baked into the image at the config default path
+      # (/app/dbn-standard-resume-template/...), so no volume mount or override
+      # is needed here.
     depends_on:
       redis:
         condition: service_healthy
     volumes:
       - ./backend/media:/app/media
-      # Template lives outside the backend build context; mount it read-only so
-      # the /template/download endpoint resolves TEMPLATE_PPTX_PATH.
-      - ./dbn-standard-resume-template:/app/templates:ro
 
   celery-worker:
     build: ./backend

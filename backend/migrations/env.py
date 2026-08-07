@@ -32,22 +32,32 @@ target_metadata = Base.metadata
 def _migration_target() -> tuple[str, dict]:
     """Resolve the migration target (stripped URL + connect_args).
 
-    Returns ``(url_without_sslmode, {"ssl": mode})``. Neon connection strings
-    carry ``?sslmode=require``, but asyncpg does not accept ``sslmode`` as a
-    URL query param — it expects ``ssl`` in ``connect_args``. We strip the
-    param from the URL (asyncpg-safe) and hand it back as connect_args.
+    Returns ``(url_without_params, connect_args)``. Neon connection strings
+    carry ``?sslmode=require`` and may include ``channel_binding``. ``sslmode``
+    maps to asyncpg's ``ssl`` connect_arg; ``channel_binding`` has no asyncpg
+    equivalent (it's a psql/Neon URL option), so it is dropped — TLS is already
+    required via ``sslmode=require``.
     """
     from app.core.config import settings
 
     url = str(settings.DATABASE_URL)
     connect_args: dict = {}
-    if "sslmode" in url:
-        parts = urlsplit(url)
-        params = parse_qs(parts.query)
-        ssl_mode = params.pop("sslmode", ["require"])[0]
+    PARAM_TO_CONNECT_ARG = {"sslmode": "ssl"}
+    DROP_PARAMS = {"channel_binding"}
+    parts = urlsplit(url)
+    params = parse_qs(parts.query)
+    changed = False
+    for name, arg in PARAM_TO_CONNECT_ARG.items():
+        if name in params:
+            connect_args[arg] = params.pop(name, ["require"])[0]
+            changed = True
+    for name in DROP_PARAMS:
+        if name in params:
+            params.pop(name, None)
+            changed = True
+    if changed:
         query = urlencode({k: v[0] for k, v in params.items()}, doseq=True)
         url = urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
-        connect_args["ssl"] = ssl_mode
     return url, connect_args
 
 

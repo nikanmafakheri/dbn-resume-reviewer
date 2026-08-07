@@ -4,19 +4,20 @@ AI-powered resume reviewer — **completely free**, single-page web app. Upload 
 
 ## Tech Stack
 
-- **Backend**: Python 3.12, FastAPI, SQLAlchemy 2.0 async, SQLite (dev) / PostgreSQL (Docker)
+- **Backend**: Python 3.12, FastAPI, SQLAlchemy 2.0 async, PostgreSQL (Neon)
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS — single-page, bilingual (EN/FA), RTL
-- **AI**: Multi-provider (Gemini default, OpenAI, Claude, OpenRouter), free Gemini tier key
-- **Queue**: Celery + Redis (configured; MVP scores inline)
+- **AI**: InferX (OpenAI-compatible gateway, Qwen3.6-35B-A3B-FP8) — single provider
+- **Queue**: none on deploy — scoring runs inline; Redis/Celery are optional dev-only extras
 - **Auth**: none — the app is anonymous (no accounts, no JWT)
 
 ## Quick Start
 
 ```bash
-# Backend
+# Backend (requires a Neon PostgreSQL DATABASE_URL in backend/.env)
 cd backend
-cp .env.example .env    # set GEMINI_API_KEY
-uv run uvicorn app.main:app --reload   # uses SQLite by default
+cp .env.example .env
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
 
 # Frontend
 cd frontend
@@ -27,6 +28,17 @@ npm run dev
 - API: http://localhost:8000
 - Swagger UI: http://localhost:8000/docs
 - Frontend: http://localhost:3000
+
+## Deploy (Render free tier)
+
+Two free services (see `render.yaml`), each deploys automatically on push to `main`:
+
+- **API** — Docker web service. Migrations run at startup (`alembic upgrade head`
+  when `DEBUG != "true"`); set `DATABASE_URL` and `INFERX_API_KEY` in the dashboard.
+- **Web** — static React site pointing at the API via `VITE_API_BASE_URL`.
+
+No Redis is provisioned — the rate limiter falls back to in-memory and scoring is
+synchronous.
 
 ## Tests & Lint
 
