@@ -2,6 +2,7 @@
 
 import asyncio
 from logging.config import fileConfig
+from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from alembic import context
 from sqlalchemy import pool
@@ -28,21 +29,31 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-def _migration_url() -> str:
-    """Resolve the migration target URL.
+def _migration_target() -> tuple[str, dict]:
+    """Resolve the migration target (stripped URL + connect_args).
 
-    The app's settings read DATABASE_URL (env/.env), which composes/CI override
-    to Postgres. Prefer that; fall back to the alembic.ini default (SQLite) so a
-    bare `alembic upgrade head` keeps working in local dev.
+    Returns ``(url_without_sslmode, {"ssl": mode})``. Neon connection strings
+    carry ``?sslmode=require``, but asyncpg does not accept ``sslmode`` as a
+    URL query param — it expects ``ssl`` in ``connect_args``. We strip the
+    param from the URL (asyncpg-safe) and hand it back as connect_args.
     """
     from app.core.config import settings
 
-    return str(settings.DATABASE_URL)
+    url = str(settings.DATABASE_URL)
+    connect_args: dict = {}
+    if "sslmode" in url:
+        parts = urlsplit(url)
+        params = parse_qs(parts.query)
+        ssl_mode = params.pop("sslmode", ["require"])[0]
+        query = urlencode({k: v[0] for k, v in params.items()}, doseq=True)
+        url = urlunsplit((parts.scheme, parts.netloc, parts.path, query, parts.fragment))
+        connect_args["ssl"] = ssl_mode
+    return url, connect_args
 
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode (emit SQL without connecting)."""
-    url = _migration_url()
+    url, _ = _migration_target()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -65,11 +76,13 @@ async def run_async_migrations() -> None:
     configuration = config.get_section(config.config_ini_section, {})
     # Point at the resolved URL (settings DATABASE_URL, else alembic.ini), so
     # online migrations honor compose/CI Postgres overrides.
-    configuration["sqlalchemy.url"] = _migration_url()
+    url, connect_args = _migration_target()
+    configuration["sqlalchemy.url"] = url
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

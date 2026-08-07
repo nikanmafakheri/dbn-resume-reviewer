@@ -1,4 +1,12 @@
-"""OpenAI / OpenRouter-compatible provider."""
+"""InferX provider — the single LLM provider (OpenAI-compatible gateway).
+
+InferX (the user calls it "infraX") serves OpenAI-compatible endpoints for
+serverless GPU inference. This is the only provider wired into the app:
+``LLM_PROVIDER`` was removed; ``create_scorer``/``get_llm_provider`` always
+return this class.
+
+Doc/catalog: https://model.inferx.net/catalog/endpoints/deepseek-v4-flash?tenant=tn-1e5q8va4so
+"""
 
 import json
 import logging
@@ -16,15 +24,15 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-class OpenAIProvider(BaseLLMProvider):
+class InferXProvider(BaseLLMProvider):
     def __init__(self):
-        self.api_key = settings.OPENAI_API_KEY
-        self.base_url = "https://api.openai.com/v1"
-        self.model = "gpt-4o"
+        self.api_key = settings.INFERX_API_KEY
+        self.base_url = settings.INFERX_BASE_URL
+        self.model = settings.INFERX_MODEL
 
     async def generate(self, prompt: str, schema: type | None = None) -> dict:
         if not self.api_key:
-            raise RuntimeError("OPENAI_API_KEY is not configured")
+            raise RuntimeError("INFERX_API_KEY is not configured")
 
         messages = [{"role": "user", "content": prompt}]
         kwargs = {"model": self.model, "messages": messages}
@@ -47,20 +55,20 @@ class OpenAIProvider(BaseLLMProvider):
                 result = resp.json()
                 content = result["choices"][0]["message"]["content"]
         except httpx.HTTPStatusError as exc:
-            logger.error("OpenAI request failed (%s): %.200s", resp.status_code, resp.text)
-            message = f"OpenAI request failed ({resp.status_code})"
+            logger.error("InferX request failed (%s): %.200s", resp.status_code, resp.text)
+            message = f"InferX request failed ({resp.status_code})"
             if resp.status_code == 429 or is_rate_limit_error(exc):
                 raise ProviderRateLimitError(message) from exc
             raise RuntimeError(message) from exc
         except (httpx.HTTPError, KeyError, IndexError) as exc:
-            logger.exception("OpenAI request failed")
-            raise RuntimeError(f"OpenAI request failed: {exc}") from exc
+            logger.exception("InferX request failed")
+            raise RuntimeError(f"InferX request failed: {exc}") from exc
 
         if not content:
-            raise RuntimeError("OpenAI returned an empty response")
+            raise RuntimeError("InferX returned an empty response")
 
         try:
             return json.loads(content)
         except json.JSONDecodeError:
-            logger.warning("OpenAI returned non-JSON response; falling back to raw")
+            logger.warning("InferX returned non-JSON response; falling back to raw")
             return {"raw": content}

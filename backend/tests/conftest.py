@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
+import os
 from typing import AsyncGenerator
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.core.constants import UserRole
@@ -19,26 +19,70 @@ from app.domain.models.base import Base
 from app.domain.models.user import User
 from app.main import create_app
 
-# Use a separate test database
-TEST_DATABASE_URL = settings.DATABASE_URL
-if "test" not in str(TEST_DATABASE_URL):
-    TEST_DATABASE_URL = str(TEST_DATABASE_URL).replace("dbn_resume", "dbn_resume_test")
+# Use a separate test database.
+# Prefer an explicit TEST_DATABASE_URL (set in CI / local Neon testing) so the
+# suite can target a dedicated database without string surgery on a Neon URL.
+# Fall back to deriving `dbn_resume_test` from DATABASE_URL. On Neon the test
+# database must already exist; the session-scoped create_all/drop_all only
+# (re)builds tables, it does not create the database.
+_TEST_DB_URL = os.environ.get("TEST_DATABASE_URL", "")
+if not _TEST_DB_URL:
+    _TEST_DB_URL = str(settings.DATABASE_URL)
+    if "test" not in _TEST_DB_URL:
+        _TEST_DB_URL = _TEST_DB_URL.replace("dbn_resume", "dbn_resume_test")
 
+if "test" not in _TEST_DB_URL:
+    raise RuntimeError(
+        "Refusing to run the test suite against a non-test database "
+        f"({_TEST_DB_URL!r}). Set TEST_DATABASE_URL to a dedicated test DB "
+        "(e.g. the 'dbn_resume_test' database on Neon)."
+    )
+if "+asyncpg" not in _TEST_DB_URL:
+    raise RuntimeError(
+        "Tests require a PostgreSQL database (asyncpg). "
+        f"Got non-Postgres URL: {_TEST_DB_URL!r}"
+    )
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create a single event loop for the test session."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+TEST_DATABASE_URL = _TEST_DB_URL
 
 
 @pytest_asyncio.fixture(scope="session")
 async def db_engine():
-    """Create the test database engine."""
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    """Create the test database engine.
+
+    Reuses the app's engine factory so tests exercise the exact same
+    connect_args / SSL / pool behavior as production (asyncpg + Neon).
+    """
+    from app.core.database import Database
+
+    engine = Database._create_engine(TEST_DATABASE_URL)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Seed reference rows (anonymous user + default DBN standard) like prod's
+    # init_db: Postgres enforces FKs, so the upload/analyze routes need the
+    # ANONYMOUS_USER_ID row present before they reference it. (SQLite let this
+    # pass without FK enforcement.)
+    anon_id = UUID(Database.ANONYMOUS_USER_ID)
+    factory = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    async with factory() as session:
+        from app.core.constants import UserRole
+        from app.core.security import hash_password
+        from app.domain.models.user import User
+
+        if not await session.get(User, anon_id):
+            session.add(
+                User(
+                    id=anon_id,
+                    email="anonymous@dbnresume.com",
+                    password_hash=hash_password("anonymous"),
+                    full_name="Anonymous User",
+                    role=UserRole.SYSTEM,
+                    is_active=True,
+                )
+            )
+            await session.commit()
+
     yield engine
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

@@ -3,7 +3,6 @@
 from fastapi import Depends
 
 from app.ai.scorers.resume_scorer import ResumeScorer
-from app.core.config import settings
 from app.core.database import get_db
 from app.repositories.analysis_repo import AnalysisRepository
 from app.repositories.dbn_standard_repo import DBNStandardRepository
@@ -29,34 +28,14 @@ def get_standard_repo(db=Depends(get_db)) -> DBNStandardRepository:
 
 # ── AI ──
 def get_llm_provider():
-    if settings.LLM_PROVIDER == "gemini":
-        from app.ai.providers.gemini import GeminiProvider
-        return GeminiProvider()
-    elif settings.LLM_PROVIDER == "openai":
-        from app.ai.providers.openai import OpenAIProvider
-        return OpenAIProvider()
-    elif settings.LLM_PROVIDER == "claude":
-        from app.ai.providers.claude import ClaudeProvider
-        return ClaudeProvider()
-    else:
-        from app.ai.providers.openrouter import OpenRouterProvider
-        return OpenRouterProvider()
+    from app.ai.providers.inferx import InferXProvider
+    return InferXProvider()
 
 
 def create_scorer() -> ResumeScorer:
     """Standalone factory for ResumeScorer (usable outside FastAPI DI, e.g. Celery)."""
-    if settings.LLM_PROVIDER == "gemini":
-        from app.ai.providers.gemini import GeminiProvider
-        provider = GeminiProvider()
-    elif settings.LLM_PROVIDER == "openai":
-        from app.ai.providers.openai import OpenAIProvider
-        provider = OpenAIProvider()
-    elif settings.LLM_PROVIDER == "claude":
-        from app.ai.providers.claude import ClaudeProvider
-        provider = ClaudeProvider()
-    else:
-        from app.ai.providers.openrouter import OpenRouterProvider
-        provider = OpenRouterProvider()
+    from app.ai.providers.inferx import InferXProvider
+    provider = InferXProvider()
     return ResumeScorer(provider)
 
 

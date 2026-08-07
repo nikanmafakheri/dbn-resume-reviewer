@@ -24,6 +24,12 @@ class Database:
     ANONYMOUS_USER_ID = "00000000-0000-0000-0000-000000000000"
 
     def __init__(self, url: str):
+        if not url:
+            raise RuntimeError(
+                "DATABASE_URL is not set. Configure it in backend/.env "
+                "(postgresql+asyncpg://USER:PASS@HOST.neon.tech/DB?sslmode=require) "
+                "before starting the app."
+            )
         self.engine = self._create_engine(url)
         self.session_factory = async_sessionmaker(
             bind=self.engine,
@@ -33,15 +39,39 @@ class Database:
 
     @staticmethod
     def _create_engine(url: str):
-        """Create async SQLAlchemy engine with sensible defaults."""
+        """Create async SQLAlchemy engine with sensible defaults.
+
+        Neon is serverless: connections go idle (pool_pre_ping re-establishes)
+        and per-connection resources are limited (small pool, short recycle).
+
+        asyncpg does not accept ``sslmode`` as a URL query param (Neon appends
+        ``?sslmode=require``), so we strip it from the URL and set TLS via
+        ``connect_args={"ssl": ...}`` instead.
+        """
+
+        connect_args: dict = {}
+        if "sslmode" in url:
+            from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
+
+            parts = urlsplit(url)
+            params = parse_qs(parts.query)
+            ssl_mode = params.pop("sslmode", ["require"])[0]
+            query = urlencode(
+                {k: v[0] for k, v in params.items()}, doseq=True
+            )
+            url = urlunsplit(
+                (parts.scheme, parts.netloc, parts.path, query, parts.fragment)
+            )
+            connect_args["ssl"] = ssl_mode
 
         return create_async_engine(
             str(url),
             echo=False,
-            pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=10,
+            pool_pre_ping=settings.DB_POOL_PRE_PING,
+            pool_size=settings.DB_POOL_SIZE,
+            max_overflow=settings.DB_MAX_OVERFLOW,
             pool_recycle=300,
+            connect_args=connect_args,
         )
 
     @property

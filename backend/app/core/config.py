@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -36,10 +35,16 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "dev-only-insecure-secret-change-me"
 
     # ── Database ─────────────────────────────────────
-    DATABASE_URL: str = "sqlite+aiosqlite:///./dbn_resume.db"
-    DB_POOL_SIZE: int = 20
+    # Required (no default): Neon Postgres is the single database. An empty
+    # value makes startup fail fast rather than silently falling back to a
+    # local SQLite file. Format:
+    #   postgresql+asyncpg://USER:PASSWORD@HOST.neon.tech/DB?sslmode=require
+    DATABASE_URL: str = ""
+    DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 10
     DB_POOL_PRE_PING: bool = True
+    # Neon requires TLS; asyncpg honors `sslmode` in the URL/connect_args.
+    DATABASE_SSL_MODE: str = "require"
 
     # ── Redis ────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -62,19 +67,18 @@ class Settings(BaseSettings):
     CORS_ALLOW_CREDENTIALS: bool = True
 
     # ── LLM Provider ─────────────────────────────────
-    LLM_PROVIDER: Literal["gemini", "openai", "claude", "openrouter"] = "gemini"
+    # InferX is the single LLM provider — an OpenAI-compatible gateway at
+    # model.inferx.net running DeepSeek V4 Flash.
 
     # Per-provider ceiling on a single LLM request (seconds). Applied around each
     # `generate()` call in the scorer, so a slow/hung provider fails gracefully
     # (classified `timed_out` → friendly wait-and-retry) instead of leaving the
     # frontend polling a stuck `processing` analysis forever. Sits above normal
-    # latency (Gemini flash is ~1-5s) but well below a user's patience.
+    # latency but well below a user's patience.
     LLM_REQUEST_TIMEOUT_SECONDS: float = 90.0
-    GEMINI_MODEL: str = "gemini-2.0-flash"
-    GEMINI_API_KEY: str | None = None
-    OPENAI_API_KEY: str | None = None
-    CLAUDE_API_KEY: str | None = None
-    OPENROUTER_API_KEY: str | None = None
+    INFERX_API_KEY: str | None = None
+    INFERX_BASE_URL: str = "https://model.inferx.net/endpoints/v1"
+    INFERX_MODEL: str = "Qwen3.6-35B-A3B-FP8"
 
     # ── Email ────────────────────────────────────────
     SMTP_HOST: str | None = None
@@ -89,6 +93,32 @@ class Settings(BaseSettings):
 
     # ── Idempotency ──────────────────────────────────
     IDEMPOTENCY_TTL: int = 86_400  # 24 hours
+
+    @field_validator("DATABASE_URL", mode="after")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        """Enforce the Postgres/Neon contract on DATABASE_URL.
+
+        - Empty is allowed here so the module imports and unit tests construct
+          Settings freely; the engine raises a clear error at startup instead
+          (see ``app.core.database.Database``).
+        - Only an asyncpg Postgres URL is supported. Migrations and tests swap
+          the database name on this string, so a non-Postgres scheme would
+          corrupt the test DB derivation — reject it loudly.
+        - Neon's connection string includes ``?sslmode=require``. asyncpg does
+          not accept ``sslmode`` as a URL query param, so we validate it stays
+          well-formed but leave SSL translation to the engine
+          (``app.core.database``), which moves it into ``connect_args``.
+        """
+        if not v:
+            return v
+        if not v.startswith("postgresql") or "+asyncpg" not in v:
+            raise ValueError(
+                "DATABASE_URL must use the asyncpg driver (e.g. "
+                "postgresql+asyncpg://USER:PASS@HOST.neon.tech/DB?sslmode=require). "
+                f"Got: {v!r}"
+            )
+        return v
 
     @field_validator("MEDIA_ROOT", mode="before")
     @classmethod

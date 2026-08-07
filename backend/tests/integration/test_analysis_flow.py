@@ -9,11 +9,10 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.constants import AnalysisStatus, UserRole
+from app.core.constants import AnalysisStatus
 from app.core.database import Database
 from app.core.scoring import weighted_overall
 from app.domain.models.resume import Resume
-from app.domain.models.user import User
 from app.schemas.analysis import Confidence, DimensionScore, ScoreResult
 
 
@@ -65,17 +64,9 @@ class FakeScorer:
 
 
 async def _seed_resume(db_session) -> str:
-    anon = User(
-        id=Database.ANONYMOUS_USER_ID,
-        email="anonymous@dbnresume.com",
-        password_hash="x",
-        full_name="Anonymous",
-        role=UserRole.SYSTEM,
-        is_active=True,
-    )
-    db_session.add(anon)
-    await db_session.flush()
-
+    # The anonymous user is seeded once at test-DB setup (conftest db_engine).
+    # Postgres enforces FKs, so re-inserting it here would be a
+    # UniqueViolationError. Just insert the resume referencing it.
     resume = Resume(
         id=uuid4(),
         user_id=Database.ANONYMOUS_USER_ID,
