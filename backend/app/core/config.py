@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from pydantic import field_validator
@@ -63,8 +64,32 @@ class Settings(BaseSettings):
     )
 
     # ── CORS ─────────────────────────────────────────
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    # Stored as a raw string: pydantic-settings JSON-decodes *list[str]* fields
+    # from the env source BEFORE any validator runs, and a malformed value
+    # (which Vercel's env carried) crashes the import → HTTP 500 on every
+    # request. Keep the raw string and parse defensively via
+    # `cors_origins_list` below.
+    CORS_ORIGINS: str = '["http://localhost:3000"]'
     CORS_ALLOW_CREDENTIALS: bool = True
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS_ORIGINS defensively — never raise on a bad value."""
+        v = (self.CORS_ORIGINS or "").strip()
+        if not v:
+            return []
+        if v.startswith("[") and v.endswith("]"):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(o) for o in parsed]
+            except ValueError:
+                pass
+        # Tolerate a bare URL (no brackets) too.
+        stripped = v.strip("'\"")
+        if stripped.startswith(("http://", "https://")):
+            return [stripped]
+        return []
 
     # ── LLM Provider ─────────────────────────────────
     # InferX is the single LLM provider — an OpenAI-compatible gateway at
@@ -120,7 +145,6 @@ class Settings(BaseSettings):
             )
         return v
 
-    @field_validator("MEDIA_ROOT", mode="before")
     @classmethod
     def resolve_media_root(cls, v: str | Path) -> Path:
         path = Path(v)
