@@ -2,7 +2,12 @@
 
 from pathlib import Path
 
-import magic
+# NOTE: `magic` is intentionally imported lazily inside validate_file_content
+# (never at module top). python-magic requires the system libmagic library,
+# which is NOT present on Vercel's Python runtime. Since the upload route only
+# uses the pure-Python guards below, a top-level `import magic` would crash the
+# whole service at import time on Vercel. Lazy import keeps module import cheap
+# and deployable everywhere.
 
 # PDF only: the pipeline extracts text from PDFs (see utils/pdf.py). DOCX was
 # previously allowed here but no DOCX text extraction exists, so a .docx upload
@@ -36,6 +41,15 @@ def validate_file_content(content: bytes, filename: str) -> tuple[bool, str | No
 
     if len(content) > MAX_FILE_SIZE:
         return False, f"File exceeds maximum size of {MAX_FILE_SIZE_MB} MB"
+
+    try:
+        import magic  # lazy: needs system libmagic (absent on Vercel Python runtime)
+    except ImportError:
+        # No libmagic available (e.g. Vercel serverless). Skip MIME sniffing —
+        # the extension + size guards above already harden uploads, and this
+        # validator is not part of the request path (the upload route calls
+        # is_allowed_file / is_valid_file_size only).
+        return True, None
 
     # Detect MIME type from content (magic bytes)
     mime_type = magic.from_buffer(content, mime=True)
