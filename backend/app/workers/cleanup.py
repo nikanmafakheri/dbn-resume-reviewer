@@ -2,11 +2,12 @@
 
 import asyncio
 import logging
+import tempfile
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from sqlalchemy import select
 
-from app.core.config import settings
 from app.core.database import get_database, init_database
 from app.domain.models.resume import Resume
 from app.workers.celery import celery_app
@@ -27,7 +28,10 @@ def cleanup_stale_uploads():
 async def _cleanup():
     """Async implementation of stale upload cleanup."""
 
-    media_dir = settings.MEDIA_ROOT / "resumes"
+    # Uploads live under the OS temp dir (same as ResumeService.upload) so this
+    # cleanup works on Vercel's Fluid Compute too, where the repo filesystem is
+    # read-only.
+    media_dir = Path(tempfile.gettempdir()) / "resumes"
     if not media_dir.exists():
         return
 

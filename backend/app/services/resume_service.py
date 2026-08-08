@@ -1,10 +1,10 @@
 """Resume management service."""
 
+import tempfile
 import uuid
 from pathlib import Path
 from uuid import UUID
 
-from app.core.config import settings
 from app.core.constants import ResumeStatus
 from app.core.database import Database
 from app.domain.models.resume import Resume
@@ -29,7 +29,10 @@ class ResumeService:
         self.resume_repo = resume_repo
 
     async def upload(self, filename: str, content: bytes) -> Resume:
-        upload_dir = settings.MEDIA_ROOT / "resumes"
+        # Store uploaded files under the OS temp dir (Vercel's Fluid Compute
+        # filesystem is read-only except /tmp). MEDIA_ROOT is reserved for the
+        # bundled DBN template — not for uploads.
+        upload_dir = Path(tempfile.gettempdir()) / "resumes"
         upload_dir.mkdir(parents=True, exist_ok=True)
 
         storage_name = _safe_storage_name(filename)
