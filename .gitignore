@@ -64,3 +64,5 @@ coverage/
 *.sqlite
 *.sqlite3
 backend/media/
+.vercel
+.env*
