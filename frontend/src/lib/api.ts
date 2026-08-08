@@ -6,8 +6,7 @@
  * overriding via the `VITE_API_BASE_URL` environment variable.
  */
 export const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
-  'http://localhost:8000/api/v1';
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1';
 
 export interface ApiError {
   status: number;
