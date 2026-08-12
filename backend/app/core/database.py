@@ -55,16 +55,16 @@ class Database:
         # asyncpg accepts ``ssl`` as a connect_arg but not ``sslmode``/``channel_binding``
         # as URL params (Neon appends both). ``sslmode`` maps to ``ssl``; ``channel_binding``
         # has no asyncpg equivalent, so drop it (TLS is already required via sslmode).
-        PARAM_TO_CONNECT_ARG = {"sslmode": "ssl"}
-        DROP_PARAMS = {"channel_binding"}
+        param_to_connect_arg = {"sslmode": "ssl"}
+        drop_params = {"channel_binding"}
         parts = urlsplit(url)
         params = parse_qs(parts.query)
         needs_rebuild = False
-        for name, arg in PARAM_TO_CONNECT_ARG.items():
+        for name, arg in param_to_connect_arg.items():
             if name in params:
                 connect_args[arg] = params.pop(name, ["require"])[0]
                 needs_rebuild = True
-        for name in DROP_PARAMS:
+        for name in drop_params:
             if name in params:
                 params.pop(name, None)
                 needs_rebuild = True

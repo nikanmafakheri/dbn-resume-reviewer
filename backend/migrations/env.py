@@ -42,16 +42,16 @@ def _migration_target() -> tuple[str, dict]:
 
     url = str(settings.DATABASE_URL)
     connect_args: dict = {}
-    PARAM_TO_CONNECT_ARG = {"sslmode": "ssl"}
-    DROP_PARAMS = {"channel_binding"}
+    param_to_connect_arg = {"sslmode": "ssl"}
+    drop_params = {"channel_binding"}
     parts = urlsplit(url)
     params = parse_qs(parts.query)
     changed = False
-    for name, arg in PARAM_TO_CONNECT_ARG.items():
+    for name, arg in param_to_connect_arg.items():
         if name in params:
             connect_args[arg] = params.pop(name, ["require"])[0]
             changed = True
-    for name in DROP_PARAMS:
+    for name in drop_params:
         if name in params:
             params.pop(name, None)
             changed = True

@@ -53,7 +53,8 @@ CLAUDE.md
 graphify-out/
 
 # Static images / assets (not needed in repo)
-images/
+images/*
+!images/hero.png
 
 # Misc
 .cache/
