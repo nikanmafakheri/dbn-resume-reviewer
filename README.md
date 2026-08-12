@@ -35,7 +35,7 @@
 
 **DBN Resume Reviewer** is a free, single-page web application designed to evaluate, score, and optimize resumes specifically for software engineering and technical roles. 
 
-Unlike generic resume tools that generate random or hallucinated scores, **DBN Resume Reviewer** uses a **deterministic 5-dimensional scoring model** powered by serverless LLM inference (DeepSeek V4 Flash via InferX). It guarantees that overall scores are calculated mathematically server-side using strict weighted formulas.
+Unlike generic resume tools that generate random or hallucinated scores, **DBN Resume Reviewer** uses a **deterministic 5-dimensional scoring model** powered by serverless LLM inference (Qwen3.6-35B-A3B-FP8 via the InferX gateway). It guarantees that overall scores are calculated mathematically server-side using strict weighted formulas.
 
 Additionally, it provides bilingual analysis (English summary + native Persian recruiter feedback) tailored to the Iranian tech hiring landscape, and offers a downloadable **DBN Standard Resume Template (.pptx)** based on minimal ATS-friendly guidelines.
 
@@ -74,7 +74,7 @@ Additionally, it provides bilingual analysis (English summary + native Persian r
               (asyncpg)         ▼              ▼
         ┌─────────────────────────┐  ┌───────────────────────────┐
         │ Neon Serverless Postgres│  │  InferX GPU API Gateway   │
-        │   (TLS / sslmode=require)│  │ (DeepSeek V4 Flash Model) │
+        │   (TLS / sslmode=require)│  │ (Qwen3.6-35B-A3B-FP8)     │
         └─────────────────────────┘  └───────────────────────────┘
 ```
 
@@ -82,7 +82,7 @@ Additionally, it provides bilingual analysis (English summary + native Persian r
 
 - **Backend**: Python 3.12, FastAPI 0.115+, SQLAlchemy 2.0 (async), Pydantic v2, Alembic
 - **Database**: Serverless PostgreSQL on Neon (`postgresql+asyncpg://` with TLS `sslmode=require`)
-- **LLM Provider**: InferX OpenAI-compatible API Gateway (`https://model.inferx.net/endpoints/v1`), running `Qwen3.6-35B-A3B-FP8` (DeepSeek V4 Flash)
+- **LLM Provider**: InferX OpenAI-compatible API Gateway (`https://model.inferx.net/endpoints/v1`), running the `Qwen3.6-35B-A3B-FP8` model
 - **Frontend**: React 19, TypeScript 6.0, Vite 8, Tailwind CSS 4.3, Oxlint
 - **Task Orchestration**: Celery & Redis (development/docker environment), synchronous execution on serverless deployments (Vercel/Render)
 - **Deployment**: Monorepo configuration on Vercel (`vercel.json`) & Blueprint deployment on Render (`render.yaml`)
