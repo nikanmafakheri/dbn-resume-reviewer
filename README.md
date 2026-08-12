@@ -1,8 +1,19 @@
 <div align="center">
 
+<br />
+
+<img src="images/logo.jpg" alt="DBN Resume Reviewer" width="140" height="140" style="border-radius: 24px;" />
+
+<br />
+
 # 📄 DBN Resume Reviewer
 
-**AI-powered, 5-dimensional resume evaluation platform for software engineering candidates & technical recruiters.**
+**AI-powered, 5-dimensional resume evaluation for software engineering candidates & technical recruiters.**
+
+[![Website](https://img.shields.io/badge/Website-dbnresumereviewer.vercel.app-0A84FF?style=flat-square&logo=vercel&logoColor=white)](https://dbnresumereviewer.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+<br />
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
@@ -11,15 +22,10 @@
 ![Vite](https://img.shields.io/badge/Vite-8-BD34FE?style=for-the-badge&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![Neon Postgres](https://img.shields.io/badge/Neon_Postgres-Serverless-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <br />
 
-[Live Demo](#-production-deployment) • [Key Features](#-key-features) • [Scoring Rubric](#-scoring-system--evaluation-philosophy) • [Architecture](#%EF%B8%8F-architecture--technology-stack) • [Quick Start](#-quick-start-local-development)
-
-<br />
-
-![DBN Resume Reviewer Hero](images/hero.png)
+[🚀 Quick Start](#-quick-start-local-development) • [🧮 Scoring System](#-scoring-system--evaluation-philosophy) • [🔌 API Reference](#-api-endpoints-reference) • [☁️ Deployment](#-production-deployment)
 
 </div>
 
