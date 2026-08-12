@@ -156,10 +156,25 @@ class Settings(BaseSettings):
     @classmethod
     def resolve_template_pptx(cls, v: str | Path) -> Path:
         path = Path(v)
-        if not path.is_absolute():
-            # Template lives at the repo root (one level above backend/).
-            path = _BACKEND_ROOT.parent / path
-        return path.resolve()
+        if path.is_absolute():
+            return path.resolve()
+
+        # The .pptx lives at the repo root (one level above backend/). On Vercel
+        # the Python service bundles ONLY the service root (`backend/` → `/var/task`),
+        # so the repo-root sibling is unreachable at runtime. We keep a copy at
+        # `backend/dbn-standard-resume-template/` (committed alongside the repo-root
+        # copy) purely for the Vercel bundle; local dev resolves the repo-root copy
+        # first. Keep the two copies in sync.
+        candidates = [
+            _BACKEND_ROOT.parent / path,     # local dev / repo checkout
+            _BACKEND_ROOT / path,            # committed copy bundled on Vercel
+        ]
+        for cand in candidates:
+            if cand.is_file():
+                return cand.resolve()
+        # No candidate exists: return the repo-root path so the route 404s with a
+        # clear message rather than failing at import time.
+        return candidates[0].resolve()
 
 
 settings = Settings()  # type: ignore[call-arg]

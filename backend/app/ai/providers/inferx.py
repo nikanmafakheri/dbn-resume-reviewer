@@ -37,6 +37,14 @@ class InferXProvider(BaseLLMProvider):
         messages = [{"role": "user", "content": prompt}]
         kwargs = {"model": self.model, "messages": messages}
 
+        # Cap the completion budget explicitly. Without it the gateway applies a
+        # small default `max_tokens` and the model silently truncates mid-JSON
+        # (~2k tokens), dropping required keys (strengths, analysis_fa, ...) →
+        # parse fails → the scorer burns another 20-30s retry. The analysis
+        # prompt already caps output ~1.8k chars, so 8192 is a generous ceiling,
+        # not an invitation to write more.
+        kwargs["max_tokens"] = 8192
+
         if schema is not None and issubclass(schema, BaseModel):
             # json_object mode requires the word "json" to appear in the prompt
             kwargs["response_format"] = {"type": "json_object"}

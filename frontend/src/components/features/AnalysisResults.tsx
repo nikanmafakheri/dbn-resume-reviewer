@@ -67,7 +67,7 @@ interface AnalysisResultsProps {
 }
 
 /** Polling cadence for in-flight analyses (ms). */
-const POLL_INTERVAL = 3000;
+const POLL_INTERVAL = 1000;
 
 export function AnalysisResults({ analysisId, onRetry, onReset }: AnalysisResultsProps) {
   const { t } = useLanguage();
